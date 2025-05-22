@@ -1,142 +1,81 @@
 <template>
-    <!-- Trigger Button -->
-    <button 
-      @click="openModal"
-      class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-    >
-      file a complain
-    </button>
+  <!-- Trigger Button -->
+  <button 
+    @click="openModal"
+    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+  >
+    File a Complaint
+  </button>
+
+  <!-- Modal -->
   <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-  <div class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-2xl mx-auto px-4">
+    <div class="bg-white p-6 rounded-lg shadow-md w-full max-w-2xl mx-4">
       <!-- Header -->
-      <div class="mb-8">
-        <button @click="closeModal" class=" text-2xl text-gray-500 hover:text-gray-700">
-            &times;
-          </button>
-        <h1 class="text-3xl font-bold text-gray-900">Employee Complaint Portal</h1>
-        <p class="text-gray-600 mt-2">
-          Submit complaints either about colleagues or external parties
-        </p>
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">Employee Complaint Portal</h1>
+        <button @click="closeModal" class="text-2xl text-gray-500 hover:text-gray-700">
+          ×
+        </button>
       </div>
+      <p class="text-gray-600 mb-6">
+        Submit anonymous complaints about colleagues or issues.
+      </p>
+
       <!-- Complaint Form -->
-      <form @submit.prevent="submitComplaint" class="bg-white p-6 rounded-lg shadow-md">
-        <div class="space-y-6">
-          <!-- Complaint Type -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              Complaint Type
-            </label>
-            <select 
-              v-model="form.complaintType"
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              required
-            >
-              <option value="">Select complaint type</option>
-              <option value="internal">Internal (Complaint about colleague)</option>
-              <option value="external">External (Complaint to other department/party)</option>
-            </select>
-          </div>
-
-          <!-- Internal Complaint Fields -->
-          <div v-if="form.complaintType === 'internal'">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Employee Name
-              </label>
-              <input
-                v-model="form.targetEmployee"
-                type="text"
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter employee name"
-                required
-              >
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Department
-              </label>
-              <select 
-                v-model="form.department"
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                required
-              >
-                <option value="">Select department</option>
-                <option>HR</option>
-                <option>IT</option>
-                <option>Finance</option>
-                <option>Operations</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- External Complaint Fields -->
-          <div v-if="form.complaintType === 'external'">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Target Department/Party
-              </label>
-              <input
-                v-model="form.targetDepartment"
-                type="text"
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter department or external party name"
-                required
-              >
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Complaint Category
-              </label>
-              <select 
-                v-model="form.category"
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                required
-              >
-                <option value="">Select category</option>
-                <option>Vendor Issue</option>
-                <option>Client Complaint</option>
-                <option>Inter-departmental</option>
-                <option>Government Agency</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Common Fields -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              Subject
-            </label>
-            <input
-              v-model="form.subject"
-              type="text"
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              required
-            >
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              Detailed Description
-            </label>
-            <textarea
-              v-model="form.description"
-              rows="4"
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Describe the issue in detail..."
-              required
-            ></textarea>
-          </div>
-
-          <button
-            type="submit"
-            class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+      <form @submit.prevent="submitComplaint" class="space-y-6">
+        <!-- Complaint Type -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Complaint Type
+          </label>
+          <select 
+            v-model="form.type"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            required
           >
-            Submit Complaint
-          </button>
+            <option value="">Select complaint type</option>
+            <option value="Harassment">Harassment</option>
+            <option value="Misconduct">Misconduct</option>
+            <option value="Workplace Safety">Workplace Safety</option>
+            <option value="Other">Other</option>
+          </select>
         </div>
+
+        <!-- Target Person ID -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Target Person ID
+          </label>
+          <input
+            v-model.number="form.target_person_id"
+            type="number"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            placeholder="Enter employee ID"
+            required
+          >
+        </div>
+
+        <!-- Subject/Description -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Subject/Description
+          </label>
+          <textarea
+            v-model="form.subject"
+            rows="4"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            placeholder="Describe the issue in detail..."
+            required
+          ></textarea>
+        </div>
+
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+        >
+          Submit Complaint
+        </button>
       </form>
 
       <!-- Success Message -->
@@ -148,57 +87,57 @@
       </div>
     </div>
   </div>
-</div>
+</template>
 
-  </template>
-  
-  <script>
-  import axios from 'axios';
-  export default {
-    emits: ['task-created'], 
-    data() {
-      return {
-        showModal: false,
-        form: {
-          name: '',
-          description: '',
-          due_date: ''
-        }
-      }
-    },
-    methods: {
-      openModal() {
-        this.showModal = true
-      },
-      closeModal() {
-        this.showModal = false
-        this.resetForm()
-      },
-      resetForm() {
-        this.form = {
-          name: '',
-          description: '',
-          due_date: ''
-        }
-      },
-      async submitForm() {
-        try {
-          const response = await axios.post('http://localhost:8000/api/tasks', {
-            name: this.form.name,
-            due_date: this.form.due_date,
-            description: this.form.description
-          })
-          // Emit event to parent component or update store
-          this.$emit('task-created', {
-          ...response.data,
-          steps: [] // Add empty steps array
-        })
-          this.resetForm()
-        } catch (error) {
-          console.error('Error creating task:', error)
-          alert('Failed to create task. Please try again.')
-        }
-      }
-    }
+<script setup>
+import { ref } from 'vue';
+import axios from 'axios';
+
+// Reactive state
+const showModal = ref(false);
+const showSuccess = ref(false);
+const form = ref({
+  type: '',
+  subject: '',
+  target_person_id: null,
+});
+
+// Methods
+const openModal = () => {
+  showModal.value = true;
+  showSuccess.value = false;
+};
+
+const closeModal = () => {
+  showModal.value = false;
+  resetForm();
+};
+
+const resetForm = () => {
+  form.value = {
+    type: '',
+    subject: '',
+    target_person_id: null,
+  };
+  showSuccess.value = false;
+};
+
+const submitComplaint = async () => {
+  try {
+    const response = await axios.post('http://localhost:8000/api/complaints', {
+      type: form.value.type,
+      subject: form.value.subject,
+      target_person_id: form.value.target_person_id,
+    });
+    console.log('Complaint created:', response.data);
+    resetForm();
+    showSuccess.value = true;
+    setTimeout(() => {
+      showModal.value = false;
+    }, 2000); // Close modal after 2 seconds
+  } catch (error) {
+    console.error('Error submitting complaint:', error);
+    alert('Failed to submit complaint. Please try again.');
   }
-  </script>
+};
+</script>
