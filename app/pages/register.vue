@@ -1,0 +1,220 @@
+<template>
+  <div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-2xl mx-auto px-4">
+        
+      <h1 class="text-3xl font-bold text-gray-900 mb-8">Register New Employee</h1>
+      <form @submit.prevent="submitForm" class="bg-white p-6 rounded-lg shadow-md">
+        <div class="space-y-6">
+          <!-- Name Input -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+            <input
+              v-model="form.name"
+              type="text"
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              :class="{ 'border-red-500': errors.name }"
+              placeholder="John Doe"
+            />
+            <p v-if="errors.name" class="text-red-500 text-sm mt-1">{{ errors.name }}</p>
+          </div>
+
+          <!-- Email Input -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+            <input
+              v-model="form.email"
+              type="email"
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              :class="{ 'border-red-500': errors.email }"
+              placeholder="john.doe@company.com"
+            />
+            <p v-if="errors.email" class="text-red-500 text-sm mt-1">{{ errors.email }}</p>
+          </div>
+
+          <!-- Department Select -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Department</label>
+            <select
+              v-model="form.department"
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              :class="{ 'border-red-500': errors.department }"
+            >
+              <option value="">Select Department</option>
+              <option v-for="dept in departments" :key="dept" :value="dept">{{ dept }}</option>
+            </select>
+            <p v-if="errors.department" class="text-red-500 text-sm mt-1">{{ errors.department }}</p>
+          </div>
+
+          <!-- Role Select -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+            <select
+              v-model="form.role"
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"   
+              :class="{ 'border-red-500': errors.role }"
+            >
+              <option value="">Select Role</option>
+              <option v-for="role in roles" :key="role" :value="role">{{ role }}</option>
+            </select>
+            <p v-if="errors.role" class="text-red-500 text-sm mt-1">{{ errors.role }}</p>
+          </div>
+
+          <!-- Submit Button -->
+           
+          <button
+            type="submit"
+            class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+          >
+            Register Employee
+          </button>
+                  <div class="text-center w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
+      <nuxt-link to="/" >
+        back
+      </nuxt-link>
+    </div>
+        </div>
+      </form>
+
+      <!-- Success Message -->
+      <div
+        v-if="showSuccess"
+        class="mt-4 p-4 bg-green-50 text-green-700 rounded-lg"
+      >
+        Employee registered successfully!
+      </div>
+
+            <!-- Registered Employees Table -->
+      <div class="mt-8">
+        <h2 class="text-xl font-semibold mb-4">Registered Employees</h2>
+        <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 rounded-lg">
+          <table class="min-w-full divide-y divide-gray-300">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="py-3 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">Name</th>
+                <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Email</th>
+                <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Department</th>
+                <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Role</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 bg-white">
+              <tr v-for="employee in employees" :key="employee.email">
+                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900">{{ employee.name }}</td>
+                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.email }}</td>
+                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.department }}</td>
+                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.role }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref } from 'vue'
+
+const form = ref({
+  name: '',
+  email: '',
+  department: '',
+  role: ''
+})
+
+const errors = ref({
+  name: '',
+  email: '',
+  department: '',
+  role: ''
+})
+
+const showSuccess = ref(false)
+
+// Dummy data
+const departments = ref([
+  'Engineering',
+  'Marketing',
+  'Sales',
+  'Human Resources',
+  'Finance',
+  'Operations'
+])
+
+const roles = ref([
+  'Software Engineer',
+  'Marketing Specialist',
+  'Sales Representative',
+  'HR Manager',
+  'Financial Analyst',
+  'Operations Manager'
+])
+
+const employees = ref([
+  {
+    name: 'John Doe',
+    email: 'john.doe@example.com',
+    department: 'Engineering',
+    role: 'Software Engineer'
+  },
+  {
+    name: 'Jane Smith',
+    email: 'jane.smith@example.com',
+    department: 'Marketing',
+    role: 'Marketing Specialist'
+  }
+])
+
+const validateEmail = (email) => {
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return re.test(email)
+}
+
+const validateForm = () => {
+  let isValid = true
+  errors.value = { name: '', email: '', department: '', role: '' }
+
+  if (!form.value.name.trim()) {
+    errors.value.name = 'Name is required'
+    isValid = false
+  }
+
+  if (!form.value.email) {
+    errors.value.email = 'Email is required'
+    isValid = false
+  } else if (!validateEmail(form.value.email)) {
+    errors.value.email = 'Invalid email format'
+    isValid = false
+  }
+
+  if (!form.value.department) {
+    errors.value.department = 'Department is required'
+    isValid = false
+  }
+
+  if (!form.value.role) {
+    errors.value.role = 'Role is required'
+    isValid = false
+  }
+
+  return isValid
+}
+
+const submitForm = () => {
+  if (!validateForm()) return
+
+  employees.value.unshift({
+    name: form.value.name,
+    email: form.value.email,
+    department: form.value.department,
+    role: form.value.role
+  })
+
+  // Reset form
+  form.value = { name: '', email: '', department: '', role: '' }
+  showSuccess.value = true
+  
+  setTimeout(() => {
+    showSuccess.value = false
+  }, 3000)
+}
+</script>
