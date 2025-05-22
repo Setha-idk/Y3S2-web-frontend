@@ -5,11 +5,24 @@
       <h1 class="text-3xl font-bold text-gray-800">Workflow Dashboard</h1>
       <p class="text-gray-600 mt-2">Manage your tasks and steps</p>
     </div>
+    <div class="flex items-center mb-4 ">
     <div>
-      <nuxt-link to="/history" class="px-4 py-2 text-gray-700 hover:text-gray-900">
+      <nuxt-link to="/history" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
         Edit History
       </nuxt-link>
     </div>
+    <div class="pl-4">
+      <nuxt-link to="/complain" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+        complain
+      </nuxt-link>
+    </div>
+    <div class="pl-4">
+      <nuxt-link to="/all" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+        Employees
+      </nuxt-link>
+    </div>
+    </div>
+
     <!-- Loading State -->
     <div v-if="loading" class="text-center py-8 text-gray-500">
       Loading dashboard data...
