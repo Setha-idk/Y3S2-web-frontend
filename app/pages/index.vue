@@ -7,20 +7,16 @@
     </div>
 
     <!-- Navigation -->
-    <div class="flex items-center mb-4 space-x-4">
+    <nav class="flex items-center mb-6 space-x-4 overflow-x-auto pb-2">
       <nuxt-link 
-        to="/complain" 
-        class="bg-rose-600 text-white px-4 py-2 rounded-lg hover:bg-rose-700 transition-colors"
+        v-for="link in navLinks"
+        :key="link.path"
+        :to="link.path"
+        class="bg-sky-600 text-white px-4 py-2 rounded-lg hover:bg-sky-700 transition-colors whitespace-nowrap"
       >
-        Complain
+        {{ link.label }}
       </nuxt-link>
-      <nuxt-link 
-        to="/admin" 
-        class="bg-rose-600 text-white px-4 py-2 rounded-lg hover:bg-rose-700 transition-colors"
-      >
-        Dashboard
-      </nuxt-link>
-    </div>
+    </nav>
 
     <!-- Loading & Error States -->
     <div v-if="loading" class="text-center py-8 text-slate-400">
@@ -32,106 +28,106 @@
 
     <!-- Main Content -->
     <div v-if="!loading && !error">
-      <!-- Statistics Cards (keep existing stats code) -->
-      
+      <!-- Statistics Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div 
+          v-for="stat in statsItems"
+          :key="stat.label"
+          class="bg-slate-800 p-4 rounded-lg shadow-lg"
+        >
+          <h3 class="text-slate-400 text-sm">{{ stat.label }}</h3>
+          <p class="text-2xl font-bold" :class="stat.color">{{ stat.value }}</p>
+        </div>
+      </div>
+        <!-- Submit Button -->
+              <div class="mt-4 flex justify-end">
+                <button
+                  @click="submitTask(task.id)"
+                  class="bg-emerald-600 mb-4 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg shadow-md transition"
+                >
+                  Submit Task
+                </button>
+              </div>
       <!-- Tasks Section -->
       <div class="bg-slate-800 rounded-lg shadow-lg p-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+          <h2 class="text-xl font-semibold text-sky-300 mb-3 sm:mb-0">Tasks</h2>
+          <div>
+            <div 
+              v-if="showSuccess"
+              class="fixed top-4 right-4 bg-emerald-600 text-white px-4 py-2 rounded-lg shadow-lg transition-opacity duration-300 z-50"
+            >
+              {{ successMessage }}
+            </div>
+            
+          </div>
+        </div>
+
+        <!-- Tasks List -->
         <div class="space-y-4">
           <template v-if="tasks.length">
             <div 
               v-for="(task, index) in tasks" 
-              :key="task?.id || index"
-              class="border border-slate-700 rounded-lg p-4 hover:shadow-xl hover:border-sky-500 transition-shadow"
+              :key="task.id || index"
+              class="task-item border border-slate-700 rounded-lg p-4 hover:shadow-xl hover:border-sky-500/70 transition-all duration-200"
             >
               <!-- Task Header -->
-              <div class="flex justify-between items-start mb-4">
-                <div>
+              <div class="flex flex-col sm:flex-row justify-between sm:items-center">
+                <div class="mb-3 sm:mb-0">
                   <h3 class="font-medium text-lg text-sky-400">{{ task.name }}</h3>
-                  <p class="text-slate-400 text-sm mt-1">{{ task.description }}</p>
-                  <div class="mt-2 flex items-center gap-2">
+                  <p class="text-slate-400 text-sm mt-1 max-w-md">{{ task.description }}</p>
+                  
+                  <!-- Task Metadata -->
+                  <div class="mt-2 flex items-center gap-x-3 gap-y-1 flex-wrap">
                     <span class="text-sm text-white">
-                      Due: {{ formatDate(task.due_date) }}
+                      Due: {{ formatDate(task.due_date) || 'N/A' }}
                     </span>
                     <span 
-                      class="px-2 py-1 text-xs rounded-full font-semibold"
+                      class="px-2 py-0.5 text-xs rounded-full font-semibold"
                       :class="statusClass(task.status)"
                     >
-                      {{ task.status }}
+                      {{ task.status?.replace('_', ' ') }}
                     </span>
+                    <a 
+                      v-if="task.file_path"
+                      :href="fileDownloadUrl(task.id)"
+                      class="text-blue-400 hover:text-blue-300 text-sm flex items-center"
+                      target="_blank"
+                    >
+                      <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                      </svg>
+                      Attached File
+                    </a>
                   </div>
                 </div>
-                <button 
-                  @click="toggleSteps(task.id)"
-                  class="text-sky-500 hover:text-sky-400 text-sm transition-colors"
-                >
-                  {{ expandedTasks.includes(task.id) ? 'Hide Steps' : 'Show Steps' }}
-                </button>
-              </div>
 
-              <!-- File Upload Section -->
-              <div class="mt-4 border-t border-slate-700 pt-4">
-                <div class="flex items-center gap-4">
-                  <input
-                    type="file"
-                    @change="handleFileSelect(task, $event)"
-                    class="block w-full text-sm text-slate-400
-                      file:mr-4 file:py-2 file:px-4
-                      file:rounded-full file:border-0
-                      file:text-sm file:font-semibold
-                      file:bg-slate-700 file:text-sky-400
-                      hover:file:bg-slate-600"
+                <!-- Task Actions -->
+                <div class="flex flex-shrink-0 flex-col sm:flex-row items-start sm:items-center gap-2">
+                
+                  <button 
+                    @click="toggleSteps(task.id)"
+                    class="task-action-btn text-sky-500 hover:text-sky-400"
                   >
-                  <button
-                    @click="uploadFile(task)"
-                    :disabled="!task.selectedFile || uploadLoading"
-                    class="px-4 py-2 bg-emerald-600 text-white rounded-full 
-                           hover:bg-emerald-700 transition-colors
-                           disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {{ uploadLoading ? 'Uploading...' : 'Upload File' }}
+                    {{ expandedTasks.includes(task.id) ? 'Hide Steps' : 'Show Steps' }}
                   </button>
                 </div>
-
-                <!-- Uploaded File Display -->
-                <div v-if="task.file_path" class="mt-3 flex items-center gap-2">
-      <a 
-        :href="`http://localhost:8000/api/tasks/${task.id}/file`"
-        class="text-sky-400 hover:text-sky-300 inline-flex items-center"
-        target="_blank"
-      >
-        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-        </svg>
-        View File
-      </a>
-      <button 
-        @click="deleteFile(task)"
-        class="text-red-400 hover:text-red-300 inline-flex items-center ml-2"
-        :disabled="isDeletingFile"
-      >
-        <svg 
-          class="w-4 h-4 mr-1" 
-          fill="none" 
-          stroke="currentColor" 
-          viewBox="0 0 24 24"
-        >
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-        </svg>
-        <span v-if="isDeletingFile">Deleting...</span>
-        <span v-else>Delete File</span>
-      </button>
-    </div>
               </div>
 
               <!-- Expanded Steps Section -->
-              <div v-if="expandedTasks.includes(task.id)" class="mt-4">
-                <StepList :task="task" />
-              </div>
+            <div 
+              v-if="expandedTasks.includes(task.id)" 
+              class="mt-3 pt-3 border-t border-slate-700"
+            >
+              <StepList :task="task" />
+
+            </div>
+
             </div>
           </template>
 
           <!-- Empty State -->
-          <div v-if="tasks.length === 0" class="text-center py-8 text-slate-500">
+          <div v-if="!tasks.length" class="text-center py-8 text-slate-500">
             No tasks found. Create your first task!
           </div>
         </div>
@@ -143,112 +139,119 @@
 <script>
 import axios from 'axios'
 import StepList from '@/components/StepList.vue'
+import TaskCreator from '@/components/TaskCreator.vue'
+import StepCreator from '@/components/StepCreator.vue'
 
 export default {
-  components: { StepList },
+  components: { TaskCreator, StepCreator, StepList },
+  
   data() {
     return {
+      showSuccess: false,
+      successMessage: '',
+      successTimeout: null,
       loading: true,
       error: null,
       tasks: [],
+      allSteps: [],
       expandedTasks: [],
-      uploadLoading: false,
-      isDeletingFile: false
+      navLinks: [
+        { path: '/complain', label: 'Complain' },
+        
+      ]
     }
   },
-  async mounted() {
-    await this.fetchTasks()
+
+  computed: {
+    statsItems() {
+      return [
+        { label: 'Total Tasks', value: this.tasks.length, color: 'text-sky-300' },
+        { label: 'Pending Tasks', value: this.tasks.filter(t => t.status === 'pending').length, color: 'text-amber-400' },
+        { label: 'Completed Steps', value: this.allSteps.filter(s => s.status === 'completed').length, color: 'text-emerald-400' },
+        { label: 'Total Steps', value: this.allSteps.length, color: 'text-sky-300' }
+      ]
+    }
   },
+
+  async mounted() {
+    await this.fetchData()
+  },
+
   methods: {
-    async fetchTasks() {
+    async fetchData() {
       try {
-        const response = await axios.get('http://localhost:8000/api/tasks')
-        this.tasks = response.data.map(task => ({
+        const [tasksRes, stepsRes] = await Promise.all([
+          axios.get('http://localhost:8000/api/tasks'),
+          axios.get('http://localhost:8000/api/steps')
+        ])
+
+        this.tasks = tasksRes.data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        this.allSteps = stepsRes.data
+
+        // Attach steps to tasks
+        this.tasks = this.tasks.map(task => ({
           ...task,
-          selectedFile: null // Add temporary file storage to each task
+          steps: this.getStepsForTask(task.id)
         }))
+
       } catch (err) {
         this.error = err.response?.data?.message || err.message
+        console.error('Fetch error:', err)
       } finally {
         this.loading = false
       }
     },
 
-    handleFileSelect(task, event) {
-      // Store selected file with the task
-      const file = event.target.files[0]
-      this.tasks = this.tasks.map(t => 
-        t.id === task.id ? { ...t, selectedFile: file } : t
-      )
+    handleNewTask(newTask) {
+      this.tasks.unshift({ ...newTask, steps: [] })
+      this.showSuccessPopup('Task created successfully!')
     },
-    async deleteFile(task) {
-      if (!confirm('Are you sure you want to delete this file? This action cannot be undone.')) {
-        return
-      }
 
-      this.isDeletingFile = true
-      try {
-        const response = await axios.delete(
-          `http://localhost:8000/api/tasks/${task.id}/file`
-        )
-
-        // Update the task in the local state
-        const taskIndex = this.tasks.findIndex(t => t.id === task.id)
-        if (taskIndex > -1) {
-          this.tasks.splice(taskIndex, 1, response.data.task)
-        }
-
-        this.$notify({
-          type: 'success',
-          title: 'Success',
-          text: 'File deleted successfully'
-        })
-
-      } catch (error) {
-        console.error('Delete file error:', error)
-        this.$notify({
-          type: 'error',
-          title: 'Error',
-          text: error.response?.data?.message || 'Failed to delete file'
-        })
-      } finally {
-        this.isDeletingFile = false
+    handleNewStep(newStep) {
+      this.allSteps.push(newStep)
+      const taskIndex = this.tasks.findIndex(t => t.id === newStep.task_id)
+      if (taskIndex > -1) {
+        const updatedTask = { ...this.tasks[taskIndex] }
+        updatedTask.steps = [...(updatedTask.steps || []), newStep]
+          .sort((a, b) => a.id - b.id)
+        this.tasks.splice(taskIndex, 1, updatedTask)
       }
     },
-    async uploadFile(task) {
-      if (!task.selectedFile) return
-      
-      this.uploadLoading = true
+
+    async deleteTask(taskId) {
       try {
-        const formData = new FormData()
-        formData.append('file', task.selectedFile)
-
-        const response = await axios.post(
-          `http://localhost:8000/api/tasks/${task.id}/file`,
-          formData,
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data'
-            }
-          }
-        )
-
-        // Update task with new file path
-        this.tasks = this.tasks.map(t =>
-          t.id === task.id ? { ...t, file_path: response.data.file_path, selectedFile: null } : t
-        )
-        
+        await axios.delete(`http://localhost:8000/api/tasks/${taskId}`)
+        this.tasks = this.tasks.filter(t => t.id !== taskId)
+        this.allSteps = this.allSteps.filter(s => s.task_id !== taskId)
+        this.showSuccessPopup('Task deleted successfully!')
       } catch (err) {
-        console.error('File upload failed:', err)
-        alert(err.response?.data?.message || 'File upload failed')
-      } finally {
-        this.uploadLoading = false
+        this.error = `Delete failed: ${err.response?.data?.message || err.message}`
+        console.error('Delete error:', err)
       }
     },
 
-    // Keep existing helper methods
+    showSuccessPopup(message) {
+      this.successMessage = message
+      this.showSuccess = true
+      clearTimeout(this.successTimeout)
+      this.successTimeout = setTimeout(() => this.showSuccess = false, 3000)
+    },
+
+    fileDownloadUrl(taskId) {
+      return `http://localhost:8000/api/tasks/${taskId}/file`
+    },
+
+    statusClass(status) {
+      const classes = {
+        pending: 'bg-amber-500/20 text-amber-300',
+        in_progress: 'bg-sky-500/20 text-sky-300',
+        completed: 'bg-emerald-500/20 text-emerald-300'
+      }
+      return `${classes[status] || 'bg-slate-500/20 text-slate-300'} px-2 py-0.5 text-xs rounded-full font-semibold`
+    },
+
     formatDate(dateString) {
-      if (!dateString) return 'N/A'
+      if (!dateString) return null
       try {
         return new Date(dateString).toLocaleDateString('en-US', {
           year: 'numeric',
@@ -256,16 +259,8 @@ export default {
           day: 'numeric'
         })
       } catch {
-        return 'Invalid date'
+        return null
       }
-    },
-
-    statusClass(status) {
-      return {
-        'pending': 'bg-amber-500/20 text-amber-300',
-        'in_progress': 'bg-sky-500/20 text-sky-300',
-        'completed': 'bg-emerald-500/20 text-emerald-300'
-      }[status] || 'bg-slate-500/20 text-slate-300'
     },
 
     toggleSteps(taskId) {
@@ -273,22 +268,28 @@ export default {
       index > -1 
         ? this.expandedTasks.splice(index, 1)
         : this.expandedTasks.push(taskId)
+    },
+
+    getStepsForTask(taskId) {
+      return this.allSteps
+        .filter(s => s.task_id === taskId)
+        .sort((a, b) => a.id - b.id)
+    },
+
+    confirmDeleteTask(taskId) {
+      const task = this.tasks.find(t => t.id === taskId)
+      if (task && confirm(`Delete task "${task.name}"? This cannot be undone.`)) {
+        this.deleteTask(taskId)
+      }
+    },
+
+    openUpdateTaskModal(task) {
+      // Implement your update modal logic here
+      console.log('Open update modal for:', task)
     }
   }
 }
 </script>
+
 <style scoped>
-/* Add animation for delete button */
-button {
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-button:hover:not(:disabled) {
-  transform: translateY(-1px);
-}
 </style>

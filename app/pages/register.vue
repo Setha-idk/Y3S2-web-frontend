@@ -3,7 +3,7 @@
     <div class="max-w-2xl mx-auto px-4">
       <h1 class="text-3xl font-bold text-gray-900 mb-8">Register New Employee</h1>
 
-      <form @submit.prevent="submitForm" class="bg-white p-6 rounded-lg shadow-md">
+      <form @submit.prevent="registerUser" class="bg-white p-6 rounded-lg shadow-md">
         <div class="space-y-6">
           <!-- Name -->
           <div>
@@ -87,11 +87,10 @@
           </div>
         </div>
       </form>
-
+        
       <!-- Success Message -->
-      <div v-if="showSuccess" class="mt-4 p-4 bg-green-50 text-green-700 rounded-lg">
-        Employee registered successfully!
-      </div>
+       <p v-if="successMessage" class="text-green-600 mt-4">{{ successMessage }}</p>
+      <p v-if="errorMessage" class="text-red-600 mt-4">{{ errorMessage }}</p>
 
       <!-- Table -->
       <div class="mt-8">
@@ -125,6 +124,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import axios from 'axios'
 
 const form = ref({
   name: '',
@@ -140,8 +140,9 @@ const errors = ref({
   role: ''
 })
 
-const showSuccess = ref(false)
 
+const successMessage = ref('')
+const errorMessage = ref('')
 // Dummy data
 const departments = ref([
   'Engineering',
@@ -160,73 +161,24 @@ const roles = ref([
   'Financial Analyst',
   'Operations Manager'
 ])
-
 const employees = ref([
   {
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    department: 'Engineering',
-    role: 'Software Engineer'
-  },
-  {
-    name: 'Jane Smith',
-    email: 'jane.smith@example.com',
-    department: 'Marketing',
-    role: 'Marketing Specialist'
+  },])
+
+const registerUser = async () => {
+  try {
+    const response = await axios.post('http://localhost:8000/api/users', form.value)
+    successMessage.value = 'User registered successfully!'
+    errorMessage.value = ''
+    form.value = { name: '', email: '', password: '', department: '', role: '' } // Reset form
+  } catch (error) {
+    if (error.response && error.response.data && error.response.data.message) {
+      errorMessage.value = error.response.data.message
+    } else {
+      errorMessage.value = 'Registration failed.'
+    }
+    successMessage.value = ''
   }
-])
-
-const validateEmail = (email) => {
-  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return re.test(email)
-}
-
-const validateForm = () => {
-  let isValid = true
-  errors.value = { name: '', email: '', department: '', role: '' }
-
-  if (!form.value.name.trim()) {
-    errors.value.name = 'Name is required'
-    isValid = false
-  }
-
-  if (!form.value.email) {
-    errors.value.email = 'Email is required'
-    isValid = false
-  } else if (!validateEmail(form.value.email)) {
-    errors.value.email = 'Invalid email format'
-    isValid = false
-  }
-
-  if (!form.value.department) {
-    errors.value.department = 'Department is required'
-    isValid = false
-  }
-
-  if (!form.value.role) {
-    errors.value.role = 'Role is required'
-    isValid = false
-  }
-
-  return isValid
-}
-
-const submitForm = () => {
-  if (!validateForm()) return
-
-  employees.value.unshift({
-    name: form.value.name,
-    email: form.value.email,
-    department: form.value.department,
-    role: form.value.role
-  })
-
-  // Reset form
-  form.value = { name: '', email: '', department: '', role: '' }
-  showSuccess.value = true
   
-  setTimeout(() => {
-    showSuccess.value = false
-  }, 3000)
 }
 </script>
