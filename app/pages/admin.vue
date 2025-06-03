@@ -8,14 +8,15 @@
 
     <!-- Navigation -->
     <nav class="flex items-center mb-6 space-x-4 overflow-x-auto pb-2">
-      <nuxt-link 
-        v-for="link in navLinks"
-        :key="link.path"
-        :to="link.path"
-        class="bg-sky-600 text-white px-4 py-2 rounded-lg hover:bg-sky-700 transition-colors whitespace-nowrap"
-      >
-        {{ link.label }}
-      </nuxt-link>
+      <template v-for="link in navLinks" :key="link.path">
+        <nuxt-link
+          v-if="!link.access || (user && user.access_level && (Array.isArray(link.access) ? link.access.includes(user.access_level) : user.access_level === link.access))"
+          :to="link.path"
+          class="bg-sky-600 text-white px-4 py-2 rounded-lg hover:bg-sky-700 transition-colors whitespace-nowrap"
+        >
+          {{ link.label }}
+        </nuxt-link>
+      </template>
     </nav>
 
     <!-- Loading & Error States -->
@@ -161,12 +162,14 @@ export default {
       tasks: [],
       allSteps: [],
       expandedTasks: [],
+      access: '',
       navLinks: [
-        { path: '/history', label: 'Edit History' },
-        { path: '/all', label: 'Employees' },
-        { path: '/register', label: 'New Employee' },
-        { path: '/assign', label: 'Assign Task' }
-      ]
+        { path: '/history', label: 'Edit History', access: 'admin' },
+        { path: '/all', label: 'Employees', access: 'admin' },
+        { path: '/register', label: 'New Employee', access: 'admin' },
+        { path: '/assign', label: 'Assign Task', access: ['admin', 'manager'] },
+      ],
+      user: null
     }
   },
 
@@ -182,6 +185,20 @@ export default {
   },
 
   async mounted() {
+    // Fetch user info (token-based)
+    try {
+      let token = null
+      if (typeof window !== 'undefined' && window.localStorage) {
+        token = localStorage.getItem('auth_token')
+      }
+      if (token) {
+        const res = await axios.get('http://localhost:8000/api/auth/me', {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        console.log('User data:', res.data)
+        this.user = res.data
+      }
+    } catch {}
     await this.fetchData()
   },
 
