@@ -4,6 +4,13 @@
     <div class="mb-8">
       <h1 class="text-3xl font-bold text-sky-400">Workflow Dashboard</h1>
       <p class="text-slate-400 mt-2">Manage your tasks and steps</p>
+      <div v-if="user" class="mt-4 bg-slate-800 rounded-lg p-4 shadow flex flex-col sm:flex-row sm:items-center gap-2">
+        <span class="font-semibold text-sky-300">{{ user.name }}</span>
+        <span class="text-slate-400">|</span>
+        <span class="text-slate-300">Department: {{ user.department }}</span>
+        <span class="text-slate-400">|</span>
+        <span class="text-slate-300">Role: {{ user.role }}</span>
+      </div>
     </div>
 
     <!-- Navigation -->
@@ -141,9 +148,14 @@ import axios from 'axios'
 import StepList from '@/components/StepList.vue'
 import TaskCreator from '@/components/TaskCreator.vue'
 import StepCreator from '@/components/StepCreator.vue'
+import { useAuth } from '../composables/useAuth.js'
 
 export default {
   components: { TaskCreator, StepCreator, StepList },
+  setup() {
+    const { user, loading: userLoading, error: userError, fetchUser } = useAuth()
+    return { user, userLoading, userError, fetchUser }
+  },
   
   data() {
     return {

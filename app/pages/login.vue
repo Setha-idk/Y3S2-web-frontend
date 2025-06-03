@@ -44,30 +44,32 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import axios from 'axios'
 
 const form = ref({
   email: '',
   password: ''
 })
-
 const successMessage = ref('')
 const errorMessage = ref('')
+const router = useRouter()
 
 const loginUser = async () => {
-  try {
-    const response = await axios.post('http://localhost:8000/api/login', form.value)
-    successMessage.value = response.data.message
-    errorMessage.value = ''
-    console.log('User info:', response.data.user)
-    // TODO: store token or redirect
-  } catch (error) {
-    if (error.response && error.response.data.message) {
-      errorMessage.value = error.response.data.message
-    } else {
-      errorMessage.value = 'Login failed'
+    try {
+      const response = await axios.post('http://localhost:8000/api/login', {
+        email: form.value.email,
+        password: form.value.password,
+      })
+      successMessage.value = response.data.message
+      errorMessage.value = ''
+      // Store token in localStorage for use in authenticated requests
+      localStorage.setItem('auth_token', response.data.token)
+      // Redirect to index.vue (dashboard) on successful login
+      router.push('/')
+    } catch (error) {
+      errorMessage.value = error.response?.data?.message || 'Login failed'
+      successMessage.value = ''
     }
-    successMessage.value = ''
-  }
 }
 </script>
