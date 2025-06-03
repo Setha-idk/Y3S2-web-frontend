@@ -4,12 +4,26 @@
     <div class="mb-8">
       <h1 class="text-3xl font-bold text-sky-400">Workflow Dashboard</h1>
       <p class="text-slate-400 mt-2">Manage your tasks and steps</p>
-      <div v-if="user" class="mt-4 bg-slate-800 rounded-lg p-4 shadow flex flex-col sm:flex-row sm:items-center gap-2">
-        <span class="font-semibold text-sky-300">{{ user.name }}</span>
-        <span class="text-slate-400">|</span>
-        <span class="text-slate-300">Department: {{ user.department }}</span>
-        <span class="text-slate-400">|</span>
-        <span class="text-slate-300">Role: {{ user.role }}</span>
+      <div v-if="user" class="mt-4 bg-gradient-to-r from-sky-800 to-slate-800 rounded-xl p-5 shadow flex flex-col sm:flex-row sm:items-center gap-4 border border-sky-700/40">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-full bg-sky-700 flex items-center justify-center text-2xl font-bold text-white shadow-inner border-2 border-sky-400">
+            {{ user.name.charAt(0).toUpperCase() }}
+          </div>
+          <div>
+            <div class="font-semibold text-lg text-sky-200">{{ user.name }}</div>
+            <div class="text-xs text-slate-400">{{ user.email }}</div>
+          </div>
+        </div>
+        <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:ml-8">
+          <span class="inline-flex items-center bg-sky-900/60 text-sky-300 px-3 py-1 rounded-full text-sm font-medium border border-sky-700">
+            <svg class="w-4 h-4 mr-1 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v4a1 1 0 001 1h3m10 0h3a1 1 0 001-1V7a1 1 0 00-1-1h-3m-10 0H4a1 1 0 00-1 1z"/></svg>
+            {{ user.department }}
+          </span>
+          <span class="inline-flex items-center bg-sky-900/60 text-sky-300 px-3 py-1 rounded-full text-sm font-medium border border-sky-700">
+            <svg class="w-4 h-4 mr-1 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 01-8 0"/></svg>
+            {{ user.role }}
+          </span>
+        </div>
       </div>
     </div>
 
@@ -23,6 +37,13 @@
       >
         {{ link.label }}
       </nuxt-link>
+      <button
+        v-if="user"
+        @click="logout"
+        class="bg-rose-600 text-white px-4 py-2 rounded-lg hover:bg-rose-700 transition-colors whitespace-nowrap ml-2"
+      >
+        Log Out
+      </button>
     </nav>
 
     <!-- Loading & Error States -->
@@ -46,15 +67,6 @@
           <p class="text-2xl font-bold" :class="stat.color">{{ stat.value }}</p>
         </div>
       </div>
-        <!-- Submit Button -->
-              <div class="mt-4 flex justify-end">
-                <button
-                  @click="submitTask(task.id)"
-                  class="bg-emerald-600 mb-4 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg shadow-md transition"
-                >
-                  Submit Task
-                </button>
-              </div>
       <!-- Tasks Section -->
       <div class="bg-slate-800 rounded-lg shadow-lg p-6">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
@@ -66,10 +78,8 @@
             >
               {{ successMessage }}
             </div>
-            
           </div>
         </div>
-
         <!-- Tasks List -->
         <div class="space-y-4">
           <template v-if="tasks.length">
@@ -83,7 +93,6 @@
                 <div class="mb-3 sm:mb-0">
                   <h3 class="font-medium text-lg text-sky-400">{{ task.name }}</h3>
                   <p class="text-slate-400 text-sm mt-1 max-w-md">{{ task.description }}</p>
-                  
                   <!-- Task Metadata -->
                   <div class="mt-2 flex items-center gap-x-3 gap-y-1 flex-wrap">
                     <span class="text-sm text-white">
@@ -108,10 +117,8 @@
                     </a>
                   </div>
                 </div>
-
                 <!-- Task Actions -->
                 <div class="flex flex-shrink-0 flex-col sm:flex-row items-start sm:items-center gap-2">
-                
                   <button 
                     @click="toggleSteps(task.id)"
                     class="task-action-btn text-sky-500 hover:text-sky-400"
@@ -120,22 +127,18 @@
                   </button>
                 </div>
               </div>
-
               <!-- Expanded Steps Section -->
-            <div 
-              v-if="expandedTasks.includes(task.id)" 
-              class="mt-3 pt-3 border-t border-slate-700"
-            >
-              <StepList :task="task" />
-
-            </div>
-
+              <div 
+                v-if="expandedTasks.includes(task.id)" 
+                class="mt-3 pt-3 border-t border-slate-700"
+              >
+                <StepList :task="task" />
+              </div>
             </div>
           </template>
-
           <!-- Empty State -->
           <div v-if="!tasks.length" class="text-center py-8 text-slate-500">
-            No tasks found. Create your first task!
+            No tasks assigned to you.
           </div>
         </div>
       </div>
@@ -146,17 +149,14 @@
 <script>
 import axios from 'axios'
 import StepList from '@/components/StepList.vue'
-import TaskCreator from '@/components/TaskCreator.vue'
-import StepCreator from '@/components/StepCreator.vue'
 import { useAuth } from '../composables/useAuth.js'
 
 export default {
-  components: { TaskCreator, StepCreator, StepList },
+  components: { StepList },
   setup() {
     const { user, loading: userLoading, error: userError, fetchUser } = useAuth()
     return { user, userLoading, userError, fetchUser }
   },
-  
   data() {
     return {
       showSuccess: false,
@@ -167,13 +167,12 @@ export default {
       tasks: [],
       allSteps: [],
       expandedTasks: [],
+      assignments: [],
       navLinks: [
         { path: '/complain', label: 'Complain' },
-        
       ]
     }
   },
-
   computed: {
     statsItems() {
       return [
@@ -184,28 +183,50 @@ export default {
       ]
     }
   },
-
   async mounted() {
     await this.fetchData()
   },
-
   methods: {
     async fetchData() {
       try {
-        const [tasksRes, stepsRes] = await Promise.all([
-          axios.get('http://localhost:8000/api/tasks'),
-          axios.get('http://localhost:8000/api/steps')
-        ])
+        // 1. Fetch tasks
+        const tasksRes = await axios.get('http://localhost:8000/api/tasks')
+        const allTasks = tasksRes.data
 
-        this.tasks = tasksRes.data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        // 2. Fetch steps
+        const stepsRes = await axios.get('http://localhost:8000/api/steps')
         this.allSteps = stepsRes.data
+
+        // 3. Fetch assignments
+        const assignmentsRes = await axios.get('http://localhost:8000/api/task-assignments')
+        this.assignments = assignmentsRes.data
+
+        // 4. Filter assignments for current user
+        const userAssignments = this.assignments.filter(a => this.user && a.employee_id === this.user.id)
+
+        // 5. For each task, check if there's an assignment for this user
+        this.tasks = allTasks
+          .map(task => {
+            const assignment = userAssignments.find(a => a.task_id === task.id)
+            if (assignment) {
+              return {
+                ...task,
+                status: assignment.status,
+                due_date: assignment.due_date,
+                file_path: assignment.file_path,
+                assignment_id: assignment.id,
+                assigned_by: assignment.assigned_by,
+              }
+            }
+            return null
+          })
+          .filter(Boolean) // Only tasks with assignments for this user
 
         // Attach steps to tasks
         this.tasks = this.tasks.map(task => ({
           ...task,
           steps: this.getStepsForTask(task.id)
         }))
-
       } catch (err) {
         this.error = err.response?.data?.message || err.message
         console.error('Fetch error:', err)
@@ -213,46 +234,15 @@ export default {
         this.loading = false
       }
     },
-
-    handleNewTask(newTask) {
-      this.tasks.unshift({ ...newTask, steps: [] })
-      this.showSuccessPopup('Task created successfully!')
-    },
-
-    handleNewStep(newStep) {
-      this.allSteps.push(newStep)
-      const taskIndex = this.tasks.findIndex(t => t.id === newStep.task_id)
-      if (taskIndex > -1) {
-        const updatedTask = { ...this.tasks[taskIndex] }
-        updatedTask.steps = [...(updatedTask.steps || []), newStep]
-          .sort((a, b) => a.id - b.id)
-        this.tasks.splice(taskIndex, 1, updatedTask)
-      }
-    },
-
-    async deleteTask(taskId) {
-      try {
-        await axios.delete(`http://localhost:8000/api/tasks/${taskId}`)
-        this.tasks = this.tasks.filter(t => t.id !== taskId)
-        this.allSteps = this.allSteps.filter(s => s.task_id !== taskId)
-        this.showSuccessPopup('Task deleted successfully!')
-      } catch (err) {
-        this.error = `Delete failed: ${err.response?.data?.message || err.message}`
-        console.error('Delete error:', err)
-      }
-    },
-
     showSuccessPopup(message) {
       this.successMessage = message
       this.showSuccess = true
       clearTimeout(this.successTimeout)
       this.successTimeout = setTimeout(() => this.showSuccess = false, 3000)
     },
-
     fileDownloadUrl(taskId) {
       return `http://localhost:8000/api/tasks/${taskId}/file`
     },
-
     statusClass(status) {
       const classes = {
         pending: 'bg-amber-500/20 text-amber-300',
@@ -261,7 +251,6 @@ export default {
       }
       return `${classes[status] || 'bg-slate-500/20 text-slate-300'} px-2 py-0.5 text-xs rounded-full font-semibold`
     },
-
     formatDate(dateString) {
       if (!dateString) return null
       try {
@@ -274,31 +263,28 @@ export default {
         return null
       }
     },
-
     toggleSteps(taskId) {
       const index = this.expandedTasks.indexOf(taskId)
       index > -1 
         ? this.expandedTasks.splice(index, 1)
         : this.expandedTasks.push(taskId)
     },
-
     getStepsForTask(taskId) {
       return this.allSteps
         .filter(s => s.task_id === taskId)
         .sort((a, b) => a.id - b.id)
     },
-
-    confirmDeleteTask(taskId) {
-      const task = this.tasks.find(t => t.id === taskId)
-      if (task && confirm(`Delete task "${task.name}"? This cannot be undone.`)) {
-        this.deleteTask(taskId)
+    async logout() {
+      try {
+        await axios.post('http://localhost:8000/api/logout', {}, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        })
+      } catch (e) {
+        // Ignore errors, just clear local state
       }
+      localStorage.removeItem('token')
+      window.location.href = '/login'
     },
-
-    openUpdateTaskModal(task) {
-      // Implement your update modal logic here
-      console.log('Open update modal for:', task)
-    }
   }
 }
 </script>
