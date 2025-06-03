@@ -106,20 +106,33 @@
       },
       async submitForm() {
         try {
+          // You must provide user_id to match backend validation
+          const token = localStorage.getItem('auth_token');
+          const userRes = await axios.get('http://localhost:8000/api/auth/me', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const userId = userRes.data.id;
           const response = await axios.post('http://localhost:8000/api/tasks', {
             name: this.form.name,
             due_date: this.form.due_date,
-            description: this.form.description
-          })
-          // Emit event to parent component or update store
+            description: this.form.description,
+            status: 'pending',
+            user_id: userId
+          }, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
           this.$emit('task-created', {
-          ...response.data,
-          steps: [] // Add empty steps array
-        })
-          this.resetForm()
+            ...response.data,
+            steps: []
+          });
+          this.closeModal();
         } catch (error) {
-          console.error('Error creating task:', error)
-          alert('Failed to create task. Please try again.')
+          console.error('Error creating task:', error);
+          alert(
+            error.response?.data?.message ||
+            (error.response?.data?.errors && JSON.stringify(error.response.data.errors)) ||
+            'Failed to create task. Please try again.'
+          );
         }
       }
     }

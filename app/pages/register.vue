@@ -71,8 +71,19 @@
             <p v-if="errors.role" class="text-red-500 text-sm mt-1">{{ errors.role }}</p>
           </div>
 
-          <!-- Password -->
-          
+          <!-- Access Level -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Access Level</label>
+            <select
+              v-model="form.access_level"
+              class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm sm:text-sm"
+              :class="{ 'border-red-500': errors.access_level }"
+            >
+              <option value="">Select Access Level</option>
+              <option v-for="level in accessLevels" :key="level" :value="level">{{ level.charAt(0).toUpperCase() + level.slice(1) }}</option>
+            </select>
+            <p v-if="errors.access_level" class="text-red-500 text-sm mt-1">{{ errors.access_level }}</p>
+          </div>
 
           <!-- Submit -->
           <button
@@ -101,18 +112,18 @@
               <tr>
                 <th class="py-3 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">Name</th>
                 <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Email</th>
-                <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Password</th>
                 <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Department</th>
                 <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Role</th>
+                <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Access Level</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-200 bg-white">
               <tr v-for="employee in employees" :key="employee.email">
                 <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900">{{ employee.name }}</td>
                 <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.email }}</td>
-                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.password }}</td>
                 <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.department }}</td>
                 <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.role }}</td>
+                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.access_level }}</td>
               </tr>
             </tbody>
           </table>
@@ -129,17 +140,20 @@ import axios from 'axios'
 const form = ref({
   name: '',
   email: '',
+  password: '',
   department: '',
-  role: ''
+  role: '',
+  access_level: ''
 })
 
 const errors = ref({
   name: '',
   email: '',
+  password: '',
   department: '',
-  role: ''
+  role: '',
+  access_level: ''
 })
-
 
 const successMessage = ref('')
 const errorMessage = ref('')
@@ -161,18 +175,29 @@ const roles = ref([
   'Financial Analyst',
   'Operations Manager'
 ])
-const employees = ref([
-  {
-  },])
+
+const accessLevels = ref([
+  'admin',
+  'manager',
+  'user'
+])
+
+const employees = ref([])
 
 const registerUser = async () => {
   try {
     const response = await axios.post('http://localhost:8000/api/users', form.value)
     successMessage.value = 'User registered successfully!'
     errorMessage.value = ''
-    form.value = { name: '', email: '', password: '', department: '', role: '' } // Reset form
+    employees.value.push(response.data)
+    form.value = { name: '', email: '', password: '', department: '', role: '', access_level: '' } // Reset form
   } catch (error) {
-    if (error.response && error.response.data && error.response.data.message) {
+    if (error.response && error.response.data && error.response.data.errors) {
+      const errs = error.response.data.errors
+      Object.keys(errors.value).forEach(key => {
+        errors.value[key] = errs[key] ? errs[key][0] : ''
+      })
+    } else if (error.response && error.response.data && error.response.data.message) {
       errorMessage.value = error.response.data.message
     } else {
       errorMessage.value = 'Registration failed.'
