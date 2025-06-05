@@ -131,29 +131,14 @@ const tasks = ref([])
 const assignments = ref([])
 const loading = ref(true)
 const error = ref('')
-
-onMounted(async () => {
-  try {
-    const [usersRes, tasksRes, assignmentsRes] = await Promise.all([
-      axios.get('http://localhost:8000/api/users'),
-      axios.get('http://localhost:8000/api/tasks'),
-      axios.get('http://localhost:8000/api/task-assignments')
-    ])
-    users.value = usersRes.data
-    tasks.value = tasksRes.data
-    assignments.value = assignmentsRes.data
-  } catch (err) {
-    error.value = err.response?.data?.message || err.message
-  } finally {
-    loading.value = false
-  }
-})
-
 const form = ref({ task_id: '', employee_id: '', due_date: '' })
 
-// User filters
+// Filters
 const userFilters = ref({ department: '', search: '' })
-const uniqueDepartments = computed(() => [...new Set(users.value.map(u => u.department))])
+const taskFilters = ref({ search: '', status: '', sort: '' })
+
+const uniqueDepartments = computed(() => [...new Set(users.value.map(u => u.department).filter(Boolean))])
+
 const filteredUsers = computed(() => {
   let filtered = users.value
   if (userFilters.value.department) {
@@ -166,8 +151,6 @@ const filteredUsers = computed(() => {
   return filtered
 })
 
-// Task filters
-const taskFilters = ref({ search: '', status: '', sort: '' })
 const filteredTasks = computed(() => {
   let filtered = tasks.value
   if (taskFilters.value.search) {
@@ -177,7 +160,6 @@ const filteredTasks = computed(() => {
   return filtered
 })
 
-// Assignment filters (by task status)
 const filteredAssignments = computed(() => {
   let filtered = assignments.value
   if (taskFilters.value.status) {
@@ -205,14 +187,35 @@ function getTaskDescription(taskId) {
   return task ? task.description : ''
 }
 
+onMounted(async () => {
+  try {
+    const [usersRes, tasksRes, assignmentsRes] = await Promise.all([
+      axios.get('http://localhost:8000/api/users'),
+      axios.get('http://localhost:8000/api/tasks'),
+      axios.get('http://localhost:8000/api/task-assignments')
+    ])
+    users.value = usersRes.data
+    tasks.value = tasksRes.data
+    assignments.value = assignmentsRes.data
+  } catch (err) {
+    error.value = err.response?.data?.message || err.message
+  } finally {
+    loading.value = false
+  }
+})
+
 async function assignTask() {
   if (!form.value.task_id || !form.value.employee_id || !form.value.due_date) return
   try {
-    // You may want to get the assigner from auth, here we use 1 as example
+    // Get assigner from auth (replace with actual logic)
+    const token = localStorage.getItem('auth_token')
+    const meRes = await axios.get('http://localhost:8000/api/auth/me', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
     const payload = {
       task_id: form.value.task_id,
       employee_id: form.value.employee_id,
-      assigned_by: 1, // Replace with actual logged-in user ID
+      assigned_by: meRes.data.id,
       due_date: form.value.due_date,
       status: 'pending'
     }

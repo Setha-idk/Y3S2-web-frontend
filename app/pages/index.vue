@@ -4,25 +4,31 @@
     <div class="mb-8">
       <h1 class="text-3xl font-bold text-sky-400">Workflow Dashboard</h1>
       <p class="text-slate-400 mt-2">Manage your tasks and steps</p>
-      <div v-if="user" class="mt-4 bg-gradient-to-r from-sky-800 to-slate-800 rounded-xl p-5 shadow flex flex-col sm:flex-row sm:items-center gap-4 border border-sky-700/40">
-        <div class="flex items-center gap-3">
-          <div class="w-12 h-12 rounded-full bg-sky-700 flex items-center justify-center text-2xl font-bold text-white shadow-inner border-2 border-sky-400">
-            {{ user.name.charAt(0).toUpperCase() }}
+      <!-- User Profile Card -->
+      <div v-if="user" class="mb-8 flex flex-col sm:flex-row items-center gap-6 bg-slate-800 rounded-lg shadow-lg p-6 border border-sky-700/40">
+        <img
+          v-if="user.profile_picture"
+          :src="getProfilePictureUrl(user.profile_picture)"
+          class="w-20 h-20 rounded-full object-cover border-4 border-sky-500"
+          alt="Profile Picture"
+        />
+        <div>
+          <div class="font-semibold text-lg text-sky-200">{{ user.name }}</div>
+          <div class="text-xs text-slate-400 mb-1">{{ user.email }}</div>
+          <div class="flex flex-wrap gap-2 mt-2">
+            <span class="inline-flex items-center bg-sky-900/60 text-sky-300 px-3 py-1 rounded-full text-sm font-medium border border-sky-700">
+              <svg class="w-4 h-4 mr-1 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v4a1 1 0 001 1h3m10 0h3a1 1 0 001-1V7a1 1 0 00-1-1h-3m-10 0H4a1 1 0 00-1 1z"/></svg>
+              {{ user.department }}
+            </span>
+            <span class="inline-flex items-center bg-sky-900/60 text-sky-300 px-3 py-1 rounded-full text-sm font-medium border border-sky-700">
+              <svg class="w-4 h-4 mr-1 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 01-8 0"/></svg>
+              {{ user.role }}
+            </span>
+            <span class="inline-flex items-center bg-sky-900/60 text-sky-300 px-3 py-1 rounded-full text-sm font-medium border border-sky-700">
+              <svg class="w-4 h-4 mr-1 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0-1.104.896-2 2-2s2 .896 2 2-.896 2-2 2-2-.896-2-2z"/></svg>
+              {{ user.access_level }}
+            </span>
           </div>
-          <div>
-            <div class="font-semibold text-lg text-sky-200">{{ user.name }}</div>
-            <div class="text-xs text-slate-400">{{ user.email }}</div>
-          </div>
-        </div>
-        <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:ml-8">
-          <span class="inline-flex items-center bg-sky-900/60 text-sky-300 px-3 py-1 rounded-full text-sm font-medium border border-sky-700">
-            <svg class="w-4 h-4 mr-1 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v4a1 1 0 001 1h3m10 0h3a1 1 0 001-1V7a1 1 0 00-1-1h-3m-10 0H4a1 1 0 00-1 1z"/></svg>
-            {{ user.department }}
-          </span>
-          <span class="inline-flex items-center bg-sky-900/60 text-sky-300 px-3 py-1 rounded-full text-sm font-medium border border-sky-700">
-            <svg class="w-4 h-4 mr-1 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 01-8 0"/></svg>
-            {{ user.role }}
-          </span>
         </div>
       </div>
     </div>
@@ -285,6 +291,10 @@ export default {
       }
       localStorage.removeItem('token')
       window.location.href = '/login'
+    },
+    getProfilePictureUrl(profile_picture) {
+      if (!profile_picture) return ''
+      return `http://localhost:8000/storage/${profile_picture}`
     },
   }
 }
