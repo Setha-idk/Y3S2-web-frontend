@@ -43,6 +43,14 @@
       >
         {{ link.label }}
       </nuxt-link>
+      <!-- Admin/Manager Button -->
+      <button
+        v-if="user && (user.access_level === 'admin' || user.access_level === 'manager')"
+        @click="$router.push('/admin')"
+        class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors whitespace-nowrap"
+      >
+        Admin Panel
+      </button>
       <button
         v-if="user"
         @click="logout"
@@ -124,7 +132,6 @@
                   </div>
                 </div>
                 <!-- Task Actions -->
-                <!-- Show Steps button for users to view steps, but no edit/delete -->
                 <div class="flex flex-shrink-0 flex-col sm:flex-row items-start sm:items-center gap-2">
                   <button 
                     @click="toggleSteps(task.id)"
@@ -132,6 +139,15 @@
                   >
                     {{ expandedTasks.includes(task.id) ? 'Hide Steps' : 'Show Steps' }}
                   </button>
+                  <!-- Submit Task Button -->
+                  <button
+                    v-if="task.status !== 'completed'"
+                    @click="openSubmitModal(task)"
+                    class="task-action-btn text-emerald-500 hover:text-emerald-400 ml-2"
+                  >
+                    Submit Task
+                  </button>
+                  <span v-else class="text-emerald-400 font-semibold ml-2">Completed</span>
                 </div>
               </div>
               <!-- Expanded Steps Section -->
@@ -140,6 +156,29 @@
                 class="mt-3 pt-3 border-t border-slate-700"
               >
                 <StepList :task="task" />
+              </div>
+              <!-- Submit Modal -->
+              <div v-if="showSubmitModal && submittingTask && submittingTask.id === task.id" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+                  <h3 class="text-lg font-semibold mb-4 text-slate-900">Submit Task: {{ submittingTask.name }}</h3>
+                  <!-- Show existing submitted file if available -->
+                  <div v-if="getSubmittedFile(submittingTask)">
+                    <p class="mb-2 text-sm text-gray-700">Current submitted file:</p>
+                    <a
+                      :href="`http://localhost:8000/storage/${getSubmittedFile(submittingTask)}`"
+                      target="_blank"
+                      class="text-blue-600 underline break-all"
+                    >View Submitted File</a>
+                  </div>
+                  <form @submit.prevent="submitTaskFile">
+                    <input type="file" @change="onFileChange" class="mb-4" required />
+                    <div class="flex gap-2">
+                      <button type="submit" class="bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-700">Submit</button>
+                      <button type="button" @click="closeSubmitModal" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">Cancel</button>
+                    </div>
+                    <div v-if="submitError" class="text-red-500 mt-2">{{ submitError }}</div>
+                  </form>
+                </div>
               </div>
             </div>
           </template>
@@ -177,7 +216,11 @@ export default {
       assignments: [],
       navLinks: [
         { path: '/complain', label: 'Complain' },
-      ]
+      ],
+      showSubmitModal: false,
+      submittingTask: null,
+      submitFile: null,
+      submitError: '',
     }
   },
   computed: {
@@ -185,8 +228,12 @@ export default {
       return [
         { label: 'Total Tasks', value: this.tasks.length, color: 'text-sky-300' },
         { label: 'Pending Tasks', value: this.tasks.filter(t => t.status === 'pending').length, color: 'text-amber-400' },
-        { label: 'Completed Steps', value: this.allSteps.filter(s => s.status === 'completed').length, color: 'text-emerald-400' },
-        { label: 'Total Steps', value: this.allSteps.length, color: 'text-sky-300' }
+        { label: 'Completed Tasks', value: this.tasks.filter(t => t.status === 'completed').length, color: 'text-emerald-400' },
+        { 
+          label: 'Total Steps', 
+          value: this.allSteps.filter(s => this.tasks.some(t => t.id === s.task_id)).length, 
+          color: 'text-sky-300' 
+        }
       ]
     }
   },
@@ -296,6 +343,59 @@ export default {
       if (!profile_picture) return ''
       return `http://localhost:8000/storage/${profile_picture}`
     },
+    openSubmitModal(task) {
+      this.submittingTask = task
+      this.showSubmitModal = true
+      this.submitFile = null
+      this.submitError = ''
+    },
+    closeSubmitModal() {
+      this.showSubmitModal = false
+      this.submittingTask = null
+      this.submitFile = null
+      this.submitError = ''
+    },
+    onFileChange(e) {
+      this.submitFile = e.target.files[0]
+    },
+    async submitTaskFile() {
+      if (!this.submitFile || !this.submittingTask) {
+        this.submitError = 'Please select a file.'
+        return
+      }
+      try {
+        // Find assignment_id for this task
+        const assignment = this.assignments.find(a => a.task_id === this.submittingTask.id && a.employee_id === this.user.id)
+        if (!assignment) {
+          this.submitError = 'Assignment not found.'
+          return
+        }
+        const formData = new FormData()
+        formData.append('submitted_file_path', this.submitFile)
+        formData.append('status', 'completed')
+        formData.append('submitted_date', new Date().toISOString().slice(0, 10))
+        // PATCH or PUT to update assignment
+        await axios.post(
+          `http://localhost:8000/api/task-assignments/${assignment.id}?_method=PUT`,
+          formData,
+          { headers: { 'Content-Type': 'multipart/form-data' } }
+        )
+        // Update UI
+        this.tasks = this.tasks.map(t =>
+          t.id === this.submittingTask.id ? { ...t, status: 'completed' } : t
+        )
+        this.showSuccessPopup('Task submitted successfully!')
+        this.closeSubmitModal()
+        await this.fetchData()
+      } catch (err) {
+        this.submitError = err.response?.data?.message || err.message
+      }
+    },
+    getSubmittedFile(task) {
+      // Find the assignment for this task and user
+      const assignment = this.assignments.find(a => a.task_id === task.id && a.employee_id === this.user.id)
+      return assignment && assignment.submitted_file_path ? assignment.submitted_file_path : null
+    }
   }
 }
 </script>
