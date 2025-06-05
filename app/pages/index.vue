@@ -118,6 +118,7 @@
                   </div>
                 </div>
                 <!-- Task Actions -->
+                <!-- Show Steps button for users to view steps, but no edit/delete -->
                 <div class="flex flex-shrink-0 flex-col sm:flex-row items-start sm:items-center gap-2">
                   <button 
                     @click="toggleSteps(task.id)"

@@ -111,13 +111,11 @@
           const userRes = await axios.get('http://localhost:8000/api/auth/me', {
             headers: { Authorization: `Bearer ${token}` }
           });
-          const userId = userRes.data.id;
           const response = await axios.post('http://localhost:8000/api/tasks', {
             name: this.form.name,
             due_date: this.form.due_date,
             description: this.form.description,
             status: 'pending',
-            user_id: userId
           }, {
             headers: { Authorization: `Bearer ${token}` }
           });

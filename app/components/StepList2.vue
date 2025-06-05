@@ -133,18 +133,22 @@
       
       async updateStep() {
         try {
+          const oldStep = { ...this.task.steps.find(s => s.id === this.editingStep.id) };
           const response = await axios.put(`http://localhost:8000/api/steps/${this.editingStep.id}`, {
             name: this.editingStep.name,
             description: this.editingStep.description,
             status: this.editingStep.status
           })
-          
           // Update local state
           const index = this.task.steps.findIndex(s => s.id === this.editingStep.id)
           if (index > -1) {
             this.task.steps.splice(index, 1, response.data)
           }
-          
+          this.$emit('step-updated', {
+            oldStep,
+            newStep: response.data,
+            task: this.task
+          });
           this.closeEditModal()
         } catch (error) {
           console.error('Error updating step:', error)
@@ -156,14 +160,17 @@
       async confirmDelete(stepId) {
         if (confirm('Are you sure you want to delete this step?')) {
           try {
+            const step = this.task.steps.find(s => s.id === stepId)
             await axios.delete(`http://localhost:8000/api/steps/${stepId}`)
-            
             // Remove from local state
             const index = this.task.steps.findIndex(s => s.id === stepId)
             if (index > -1) {
               this.task.steps.splice(index, 1)
             }
-            
+            this.$emit('step-deleted', {
+              step,
+              task: this.task
+            });
           } catch (error) {
             console.error('Error deleting step:', error)
             alert(error.response?.data?.message || 'Failed to delete step')

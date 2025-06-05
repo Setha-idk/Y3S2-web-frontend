@@ -190,6 +190,25 @@ const registerUser = async () => {
     successMessage.value = 'User registered successfully!'
     errorMessage.value = ''
     employees.value.push(response.data)
+    // Record in history API
+    try {
+      // Get current admin/creator user
+      const token = localStorage.getItem('auth_token');
+      const meRes = await axios.get('http://localhost:8000/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const user = meRes.data
+      await axios.post('http://localhost:8000/api/history', {
+        action: 'created',
+        name: response.data.name,
+        description: `Registered new user: ${response.data.name} (${response.data.email}), department: ${response.data.department}, role: ${response.data.role}, access level: ${response.data.access_level}`,
+        user_name: user.name,
+        email: user.email,
+        employee_id: user.id
+      })
+    } catch (e) {
+      // Optionally handle error
+    }
     form.value = { name: '', email: '', password: '', department: '', role: '', access_level: '' } // Reset form
   } catch (error) {
     if (error.response && error.response.data && error.response.data.errors) {
@@ -204,6 +223,5 @@ const registerUser = async () => {
     }
     successMessage.value = ''
   }
-  
 }
 </script>
