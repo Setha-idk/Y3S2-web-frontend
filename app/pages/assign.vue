@@ -19,30 +19,6 @@
 
       <!-- Assign Task Tab -->
       <div v-if="activeTab === 'assign'">
-        <!-- Filters/Search for Users -->
-        <div class="bg-white p-4 rounded-lg shadow mb-6 flex flex-col md:flex-row gap-4 items-center">
-          <div class="w-full">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Search User</label>
-            <input v-model="userFilters.search" type="text" placeholder="Search by name or email" class="block w-full rounded-md border-gray-300 shadow-sm" />
-          </div>
-        </div>
-
-        <!-- Filters/Search/Sort for Tasks -->
-        <div class="bg-white p-4 rounded-lg shadow mb-6 flex flex-col md:flex-row gap-4 items-center">
-          <div class="w-full md:w-1/2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Search Task</label>
-            <input v-model="taskFilters.search" type="text" placeholder="Search by title or description" class="block w-full rounded-md border-gray-300 shadow-sm" />
-          </div>
-          <div class="w-full md:w-1/2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
-            <select v-model="taskFilters.sort" class="block w-full rounded-md border-gray-300 shadow-sm">
-              <option value="">Default</option>
-              <option value="dueDate">Due Date</option>
-              <option value="status">Status</option>
-            </select>
-          </div>
-        </div>
-
         <!-- Assignment Form -->
         <div class="bg-white p-6 rounded-lg shadow-md mb-8">
           <form class="space-y-6" @submit.prevent="assignTask">
@@ -52,7 +28,7 @@
                 <label class="block text-sm font-medium text-gray-700 mb-1">Task</label>
                 <select v-model="form.task_id">
                   <option value="">Select Task</option>
-                  <option v-for="task in filteredTasks" :key="task.id" :value="task.id">
+                  <option v-for="task in tasks" :key="task.id" :value="task.id">
                     {{ task.name }}
                   </option>
                 </select>
@@ -62,7 +38,7 @@
                 <label class="block text-sm font-medium text-gray-700 mb-1">Assign To</label>
                 <select v-model="form.employee_id" class="block w-full rounded-md border-gray-300 shadow-sm">
                   <option value="">Select Employee</option>
-                  <option v-for="user in filteredUsers" :key="user.id" :value="user.id">
+                  <option v-for="user in users" :key="user.id" :value="user.id">
                     {{ user.name }}
                   </option>
                 </select>
