@@ -72,9 +72,14 @@
               <label class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
               <input v-model="form.due_date" type="date" class="block w-full rounded-md border-gray-300 shadow-sm" />
             </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Attach File</label>
+              <input type="file" @change="onFileChange" accept=".pdf,.doc,.docx,.xls,.xlsx,.mp4,.avi,.mov,.txt,.csv,.ppt,.pptx,image/*,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,video/*,application/pdf" class="block w-full rounded-md border-gray-300 shadow-sm" />
+            </div>
             <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
               Assign Task
             </button>
+            <p v-if="successMessage" class="text-green-600 text-sm mt-4">{{ successMessage }}</p>
           </form>
         </div>
       </div>
@@ -146,6 +151,8 @@ const error = ref('')
 const form = ref({ task_id: '', employee_id: '', due_date: '' })
 const activeTab = ref('assign')
 const currentUserId = ref(null)
+const file = ref(null)
+const successMessage = ref('')
 
 // Filters
 const userFilters = ref({ search: '' })
@@ -228,21 +235,31 @@ async function assignTask() {
     const meRes = await axios.get('http://localhost:8000/api/auth/me', {
       headers: { Authorization: `Bearer ${token}` }
     })
-    const payload = {
-      task_id: form.value.task_id,
-      employee_id: form.value.employee_id,
-      assigned_by: meRes.data.id,
-      due_date: form.value.due_date,
-      status: 'pending'
+    const formData = new FormData()
+    formData.append('task_id', form.value.task_id)
+    formData.append('employee_id', form.value.employee_id)
+    formData.append('assigned_by', meRes.data.id)
+    formData.append('due_date', form.value.due_date)
+    formData.append('status', 'pending')
+    if (file.value) {
+      formData.append('file_path', file.value)
     }
-    const res = await axios.post('http://localhost:8000/api/task-assignments', payload)
+    const res = await axios.post('http://localhost:8000/api/task-assignments', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
     assignments.value.push(res.data)
     form.value.task_id = ''
     form.value.employee_id = ''
     form.value.due_date = ''
+    file.value = null
+    successMessage.value = 'Task assigned successfully!'
   } catch (err) {
     alert('Failed to assign task: ' + (err.response?.data?.message || err.message))
   }
+}
+
+function onFileChange(e) {
+  file.value = e.target.files[0]
 }
 </script>
 

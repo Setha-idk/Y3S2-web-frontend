@@ -1,9 +1,10 @@
 <template>
-  <div class="min-h-screen bg-gray-50 p-8">
+  <div class="min-h-screen bg-slate-900 p-8">
     <div class="max-w-4xl mx-auto">
       <h1 class="text-3xl font-bold text-gray-900 mb-8">All Tasks</h1>
       <TaskCreator @task-created="addTask" />
-      <div class="bg-white rounded-lg shadow p-6 mt-6">
+      
+      <div class="bg-slate-800 rounded-lg shadow p-6 mt-6">
         <div v-if="loading" class="text-center text-gray-400 py-8">Loading tasks...</div>
         <div v-else-if="error" class="text-center text-red-400 py-8">{{ error }}</div>
         <div v-else>

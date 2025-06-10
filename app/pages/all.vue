@@ -3,6 +3,11 @@
     <div class="max-w-6xl mx-auto">
       <h1 class="text-3xl font-bold text-gray-900 mb-8">Company Employees</h1>
 
+      <!-- Alert Message -->
+      <div v-if="alertMessage" :class="['my-4 px-4 py-3 rounded border', alertType === 'success' ? 'bg-green-50 border-green-400 text-green-700' : 'bg-red-50 border-red-400 text-red-700']">
+        {{ alertMessage }}
+      </div>
+
       <!-- Tabs Navigation -->
       <div class="border-b border-gray-200">
         <nav class="flex space-x-8">
@@ -103,7 +108,14 @@
                 <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900">{{ manager.name }}</td>
                 <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ manager.email }}</td>
                 <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ manager.department }}</td>
-                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ manager.teamSize }}</td>
+                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                  <button 
+                    class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700" 
+                    @click="showTeamMembers(manager)"
+                  >
+                    Team Size ({{ getTeamSize(manager) }})
+                  </button>
+                </td>
                 <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                   <div class="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <router-link
@@ -128,6 +140,18 @@
               </tr>
             </tbody>
           </table>
+        </div>
+        <!-- Team Members Modal -->
+        <div v-if="showTeamModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+            <h3 class="text-lg font-semibold mb-4 text-slate-900">Team Members for {{ selectedManager?.name }}</h3>
+            <ul>
+              <li v-for="member in teamMembers" :key="member.id" class="mb-2 text-gray-800">
+                {{ member.name }} ({{ member.email }})
+              </li>
+            </ul>
+            <button @click="showTeamModal = false" class="mt-4 bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">Close</button>
+          </div>
         </div>
       </div>
     </div>
@@ -155,6 +179,9 @@ const updatedEmployee = ref({
   password: ''
 })
 
+const alertMessage = ref('')
+const alertType = ref('success')
+
 const openEditModal = (employee) => {
   editingEmployee.value = employee
   updatedEmployee.value = { ...employee, password: '' }
@@ -180,14 +207,29 @@ const updateEmployee = async () => {
 
     const index = employees.value.findIndex(emp => emp.id === id)
     if (index !== -1) {
-      employees.value[index] = { ...employees.value[index], ...payload }
+      // Update local lists after DB update
+      // Remove from employees if now a manager (by role or access_level)
+      const updated = { ...employees.value[index], ...payload }
+      const isManager = updated.role === 'Manager' || updated.access_level === 'manager'
+      if (isManager) {
+        // Remove from employees
+        if (index !== -1) employees.value.splice(index, 1)
+        // Add to managers if not already present
+        if (!managers.value.some(mgr => mgr.id === id)) {
+          managers.value.push({ ...updated, teamSize: Math.floor(Math.random() * 15 + 1) })
+        }
+      } else {
+        // If not a manager, update in employees list
+        if (index !== -1) employees.value[index] = updated
+      }
     }
-
     closeEditModal()
-    alert('Employee updated successfully.')
+    alertMessage.value = 'Employee updated successfully.'
+    alertType.value = 'success'
   } catch (error) {
     console.error('Failed to update employee:', error)
-    alert('Error updating employee.')
+    alertMessage.value = 'Error updating employee.'
+    alertType.value = 'error'
   }
 }
 
@@ -198,9 +240,12 @@ const deleteEmployee = async (id) => {
   try {
     await axios.delete(`http://localhost:8000/api/users/${id}`);
     employees.value = employees.value.filter(emp => emp.id !== id);
+    alertMessage.value = 'Employee deleted successfully.'
+    alertType.value = 'success'
   } catch (error) {
     console.error('Failed to delete employee:', error);
-    alert('Error deleting employee.');
+    alertMessage.value = 'Error deleting employee.'
+    alertType.value = 'error'
   }
 }
 
@@ -210,9 +255,9 @@ const fetchUsers = async () => {
     const response = await axios.get('http://localhost:8000/api/users')
     const users = response.data
 
-    employees.value = users.filter(user => user.role !== 'Manager')
+    employees.value = users.filter(user => user.role !== 'Manager' && user.access_level !== 'manager')
     managers.value = users
-      .filter(user => user.role === 'Manager')
+      .filter(user => user.role === 'Manager' || user.access_level === 'manager')
       .map(manager => ({
         ...manager,
         teamSize: Math.floor(Math.random() * 15 + 1)
@@ -225,5 +270,21 @@ const fetchUsers = async () => {
 onMounted(() => {
   fetchUsers()
 })
+
+const showTeamModal = ref(false)
+const selectedManager = ref(null)
+const teamMembers = ref([])
+
+function getTeamSize(manager) {
+  // Example: all employees with a field like manager_id === manager.id
+  return employees.value.filter(emp => emp.manager_id === manager.id).length
+}
+
+function showTeamMembers(manager) {
+  selectedManager.value = manager
+  // Example: all employees with a field like manager_id === manager.id
+  teamMembers.value = employees.value.filter(emp => emp.manager_id === manager.id)
+  showTeamModal.value = true
+}
 </script>
 

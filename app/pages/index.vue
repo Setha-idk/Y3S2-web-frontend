@@ -9,8 +9,9 @@
         <img
           v-if="user.profile_picture"
           :src="getProfilePictureUrl(user.profile_picture)"
-          class="w-20 h-20 rounded-full object-cover border-4 border-sky-500"
+          class="w-20 h-20 rounded-full object-cover border-4 border-sky-500 cursor-pointer"
           alt="Profile Picture"
+          @click="openProfilePictureModal(user.profile_picture)"
         />
         <div>
           <div class="font-semibold text-lg text-sky-200">{{ user.name }}</div>
@@ -47,10 +48,18 @@
       <button
         v-if="user && (user.access_level === 'admin' || user.access_level === 'manager')"
         @click="$router.push('/admin')"
-        class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors whitespace-nowrap"
+        class="bg-sky-700 text-white px-4 py-2 rounded-lg hover:bg-sky-700 transition-colors whitespace-nowrap"
       >
-        Admin Panel
+       Dashbord Panel
       </button>
+       <!-- Team Size Button and Modal for Managers --> 
+         <button
+          class="bg-sky-700 text-white px-4 py-2 rounded-lg hover:bg-sky-700 transition-colors whitespace-nowrap"
+          @click="showTeamModal = true"
+        >
+          Team Size
+        </button>
+    
       <button
         v-if="user"
         @click="logout"
@@ -58,6 +67,8 @@
       >
         Log Out
       </button>
+      
+  
     </nav>
 
     <!-- Loading & Error States -->
@@ -188,6 +199,29 @@
           </div>
         </div>
       </div>
+
+      <!-- Team Size Button and Modal for Managers -->
+      <div v-if="user && user.access_level === 'manager'" class="mb-8">
+      </div>
+      <div v-if="showTeamModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+          <h3 class="text-lg font-semibold mb-4 text-slate-900">My Team Members</h3>
+          <ul>
+            <li v-for="member in myTeamMembers" :key="member.id" class="mb-2 text-gray-800">
+              {{ member.name }} ({{ member.email }})
+            </li>
+          </ul>
+          <button @click="showTeamModal = false" class="mt-4 bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile Picture Modal -->
+    <div v-if="showProfilePictureModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+      <div class="relative">
+        <img :src="getProfilePictureUrl(profilePictureModalSrc)" class="max-w-full max-h-[80vh] rounded-lg shadow-2xl border-4 border-sky-500" alt="Full Profile Picture" />
+        <button @click="closeProfilePictureModal" class="absolute top-2 right-2 bg-white bg-opacity-80 rounded-full p-2 text-black hover:bg-opacity-100">&times;</button>
+      </div>
     </div>
   </div>
 </template>
@@ -216,11 +250,16 @@ export default {
       assignments: [],
       navLinks: [
         { path: '/complain', label: 'Complain' },
+        { path: '/profile', label: 'Profile' }, // Add Profile link
       ],
       showSubmitModal: false,
       submittingTask: null,
       submitFile: null,
       submitError: '',
+      showProfilePictureModal: false,
+      profilePictureModalSrc: '',
+      showTeamModal: false,
+      users: [] // To store all users for manager's team view
     }
   },
   computed: {
@@ -235,10 +274,22 @@ export default {
           color: 'text-sky-300' 
         }
       ]
-    }
+    },
+    myTeamMembers() {
+      // Show all users in the same department with access_level 'user', excluding self
+      if (!this.user || !this.users) return []
+      return this.users.filter(u => u.department === this.user.department && u.access_level === 'user' && u.id !== this.user.id)
+    },
   },
   async mounted() {
     await this.fetchData()
+    // Fetch all users for team modal if not already loaded
+    if (!this.users) {
+      try {
+        const res = await axios.get('http://localhost:8000/api/users')
+        this.users = res.data
+      } catch {}
+    }
   },
   methods: {
     async fetchData() {
@@ -295,7 +346,8 @@ export default {
       this.successTimeout = setTimeout(() => this.showSuccess = false, 3000)
     },
     fileDownloadUrl(taskId) {
-      return `http://localhost:8000/api/tasks/${taskId}/file`
+      const task = this.tasks.find(t => t.id === taskId)
+      return task && task.file_path ? `http://localhost:8000/storage/${task.file_path}` : '#'
     },
     statusClass(status) {
       const classes = {
@@ -395,6 +447,14 @@ export default {
       // Find the assignment for this task and user
       const assignment = this.assignments.find(a => a.task_id === task.id && a.employee_id === this.user.id)
       return assignment && assignment.submitted_file_path ? assignment.submitted_file_path : null
+    },
+    openProfilePictureModal(profilePicture) {
+      this.profilePictureModalSrc = profilePicture
+      this.showProfilePictureModal = true
+    },
+    closeProfilePictureModal() {
+      this.showProfilePictureModal = false
+      this.profilePictureModalSrc = ''
     }
   }
 }

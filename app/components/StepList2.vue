@@ -1,11 +1,11 @@
 <template>
     <!-- Step Item -->
     <div v-for="step in task.steps" :key="step.id" class="step-item group">
-      <div class="flex items-center justify-between">    
-        <div class="flex items-center gap-2">
+      <div class="flex items-center justify-between text-white">    
+        <div class="flex items-center gap-2 text-white">
           <!-- Status Indicator -->
           <span 
-            class="w-2 h-2 rounded-full"
+            class="bg-white w-2 h-2 rounded-full"
             :class="stepStatusClass(step.status)"
           ></span>
           <span class="text-sm text-white ml-2">{{ step.status }}</span>

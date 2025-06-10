@@ -92,10 +92,13 @@
           >
             Register Employee
           </button>
-
-          <div class="text-center w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
-            <nuxt-link to="/">Back</nuxt-link>
+          <button>
+          <div class="text-center w-full bg-blue-600 text-white py-2 px-16 rounded-md hover:bg-blue-700 transition-colors">
+            <nuxt-link to="/admin">
+              Back
+            </nuxt-link>
           </div>
+          </button>
         </div>
       </form>
         
@@ -115,6 +118,7 @@
                 <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Department</th>
                 <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Role</th>
                 <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Access Level</th>
+                <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Team Size</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-200 bg-white">
@@ -124,6 +128,12 @@
                 <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.department }}</td>
                 <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.role }}</td>
                 <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.access_level }}</td>
+                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                  <span v-if="employee.access_level === 'manager'">
+                    {{ teamSize(employee) }}
+                  </span>
+                  <span v-else>-</span>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -223,5 +233,12 @@ const registerUser = async () => {
     }
     successMessage.value = ''
   }
+}
+
+function teamSize(manager) {
+  // Count users in the same department with access_level 'user' (excluding the manager)
+  if (!manager || !manager.department) return 0
+  // Use email as fallback unique key if id is missing
+  return employees.value.filter(e => e.department === manager.department && e.access_level === 'user' && e.email !== manager.email).length
 }
 </script>

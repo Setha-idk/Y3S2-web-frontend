@@ -5,8 +5,8 @@
         <div class="flex items-center gap-2">
           <!-- Status Indicator -->
           <span 
-            class="w-2 h-2 rounded-full"
-            :class="stepStatusClass(step.status)"
+            class=" bg-white w-2 h-2 rounded-full "
+            :class=" stepStatusClass(step.status)"
           ></span>
           <span class="text-sm text-white ml-2">{{ step.status }}</span>
           

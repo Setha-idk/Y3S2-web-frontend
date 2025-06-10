@@ -9,10 +9,10 @@
       </div>
 
       <div class="mb-4">
-        <label class="block mb-1 font-medium">Role</label>
-        <select v-model="form.role" class="w-full border p-2 rounded" required>
-          <option value="Employee">Employee</option>
-          <option value="Manager">Manager</option>
+        <label class="block mb-1 font-medium">Access Level</label>
+        <select v-model="form.access_level" class="w-full border p-2 rounded" required>
+          <option value="user">Employee</option>
+          <option value="manager">Manager</option>
         </select>
       </div>
 
@@ -29,11 +29,20 @@
         {{ loading ? 'Updating...' : 'Update' }}
       </button>
     </form>
+
+    <div class="mt-8">
+      <h3 class="text-xl font-semibold mb-4">Engineering Team</h3>
+      <ul>
+        <li v-for="member in engineeringTeam" :key="member.id" class="border-b py-2">
+          {{ member.name }} - {{ member.access_level }}
+        </li>
+      </ul>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -42,20 +51,30 @@ const router = useRouter()
 
 const form = ref({
   name: '',
-  role: '',
+  access_level: '',
   password: ''
 })
 const loading = ref(false)
+const users = ref([])
 
 onMounted(async () => {
   try {
     const id = route.params.id
     const response = await axios.get(`http://localhost:8000/api/users/${id}`)
     form.value = { ...response.data, password: '' }
+    // Fetch all users for team view
+    const usersRes = await axios.get('http://localhost:8000/api/users')
+    users.value = usersRes.data
   } catch (error) {
     alert('Failed to load employee data.')
     router.push('/') // go back if failure
   }
+})
+
+const engineeringTeam = computed(() => {
+  // All users in Engineering except self
+  if (!form.value || !form.value.name) return []
+  return users.value.filter(u => u.department === 'Engineering' && u.id !== route.params.id)
 })
 
 const updateEmployee = async () => {
@@ -64,14 +83,18 @@ const updateEmployee = async () => {
     const id = route.params.id
     const payload = {
       name: form.value.name,
-      role: form.value.role,
+      access_level: form.value.access_level,
     }
     if (form.value.password) {
       payload.password = form.value.password
     }
     await axios.put(`http://localhost:8000/api/users/${id}`, payload)
     alert('Update completed successfully!')
-    router.push('/') // redirect to list or home page
+    if (payload.access_level === 'manager') {
+      router.push('/all?tab=managers')
+    } else {
+      router.push('/')
+    }
   } catch (error) {
     alert('Failed to update: ' + (error.response?.data?.message || error.message))
   } finally {
