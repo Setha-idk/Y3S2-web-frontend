@@ -3,9 +3,7 @@
       <div class="max-w-6xl mx-auto">
         <h1 class="text-3xl font-bold text-gray-900 mb-8">Edit History</h1>
         <div>
-            <nuxt-link to="/" class="px-4 py-2 text-gray-700 hover:text-gray-900">
-                back
-            </nuxt-link>
+          <BackButton class="mb-6" :to="'/admin/admin'">Back to Admin</BackButton>
         </div>
         <div class="bg-white rounded-lg shadow overflow-hidden">
           <div class="p-6">

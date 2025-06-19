@@ -4,7 +4,7 @@
       @click="openModal"
       class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
     >
-      New Task
+    New Task
     </button>
   
     <!-- Modal Backdrop -->
@@ -40,17 +40,6 @@
                 class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 rows="3"
               ></textarea>
-            </div>
-  
-            <!-- Due Date -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
-              <input
-                v-model="form.due_date"
-                type="date"
-                required
-                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
             </div>
   
             <!-- Form Actions -->
@@ -106,16 +95,11 @@
       },
       async submitForm() {
         try {
-          // You must provide user_id to match backend validation
           const token = localStorage.getItem('auth_token');
-          const userRes = await axios.get('http://localhost:8000/api/auth/me', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
+          // Always send description as a string
           const response = await axios.post('http://localhost:8000/api/tasks', {
             name: this.form.name,
-            due_date: this.form.due_date,
-            description: this.form.description,
-            status: 'pending',
+            description: this.form.description || ''
           }, {
             headers: { Authorization: `Bearer ${token}` }
           });
@@ -125,12 +109,12 @@
           });
           this.closeModal();
         } catch (error) {
-          console.error('Error creating task:', error);
-          alert(
-            error.response?.data?.message ||
-            (error.response?.data?.errors && JSON.stringify(error.response.data.errors)) ||
-            'Failed to create task. Please try again.'
-          );
+            alert(
+              error.response?.data?.message ||
+              (error.response?.data?.errors && JSON.stringify(error.response.data.errors)) ||
+              'Failed to create task. Please try again.'
+            );
+          
         }
       }
     }

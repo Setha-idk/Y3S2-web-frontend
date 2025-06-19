@@ -1,19 +1,12 @@
 <template>
     <!-- Step Item -->
-    <div v-for="step in task.steps" :key="step.id" class="step-item group">
+    <div v-for="(step, idx) in task.steps" :key="step.id" class="step-item group">
       <div class="flex items-center justify-between">    
         <div class="flex items-center gap-2">
-          <!-- Status Indicator -->
-          <span 
-            class="w-2 h-2 rounded-full"
-            :class="stepStatusClass(step.status)"
-          ></span>
-          <span class="text-sm text-white ml-2">{{ step.status }}</span>
-          
-          <!-- Step Name -->
-          <span class="text-white">{{ step.name }}</span>
+          <!--step number: Step Name -->
+          <span class="">Step {{ idx + 1 }}: {{ step.name }}</span>
           <div>
-            <span class="text-sm text-white ml-2">description: {{ step.description }}</span>
+            <span class="text-sm ml-2">description: {{ step.description }}</span>
           </div>
         </div>
   
@@ -69,19 +62,6 @@
                 >
               </div>
   
-              <!-- Status Select -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select
-                  v-model="editingStep.status"
-                  class="w-full px-3 py-2 border rounded-lg"
-                >
-                  <option value="pending">Pending</option>
-                  <option value="in_progress">In Progress</option>
-                  <option value="completed">Completed</option>
-                </select>
-              </div>
-  
               <div class="flex justify-end gap-2 mt-6">
                 <button
                   type="button"
@@ -119,7 +99,6 @@
         editingStep: {
           id: null,
           name: '',
-          status: 'pending',
           description: ''
         }
       }
@@ -136,8 +115,7 @@
           const oldStep = { ...this.task.steps.find(s => s.id === this.editingStep.id) };
           const response = await axios.put(`http://localhost:8000/api/steps/${this.editingStep.id}`, {
             name: this.editingStep.name,
-            description: this.editingStep.description,
-            status: this.editingStep.status
+            description: this.editingStep.description
           })
           // Update local state
           const index = this.task.steps.findIndex(s => s.id === this.editingStep.id)
@@ -183,16 +161,8 @@
         this.editingStep = {
           id: null,
           name: '',
-          status: 'pending'
+          description: ''
         }
-      },
-  
-      stepStatusClass(status) {
-        return {
-          'pending': 'bg-gray-300',
-          'in_progress': 'bg-blue-500',
-          'completed': 'bg-green-500'
-        }[status]
       }
     }
   }

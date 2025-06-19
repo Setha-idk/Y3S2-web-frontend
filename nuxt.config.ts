@@ -27,4 +27,13 @@ export default defineNuxtConfig({
 
   devtools: { enabled: true },
   modules: ["@nuxtjs/tailwindcss"],
+
+  app: {
+    head: {
+      title: "workflow project",
+      meta: [
+        { name: "description", content: "My Nuxt.js and laravel web project" }
+      ]
+    }
+  }
 })
