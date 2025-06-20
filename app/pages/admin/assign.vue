@@ -511,11 +511,16 @@ async function assignTask() {
       headers: { 'Content-Type': 'multipart/form-data' }
     })
     assignments.value.push(res.data)
+    // Reset form fields and dropdowns
     form.value.task_id = ''
     form.value.employee_id = ''
     form.value.due_date = ''
     file.value = null
     fileUrl.value = ''
+    taskFilters.search = ''
+    userFilters.search = ''
+    taskDropdownOpen.value = false
+    userDropdownOpen.value = false
     assignSuccess.value = true
     setTimeout(() => assignSuccess.value = false, 2500)
   } catch (err) {
