@@ -304,6 +304,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import axios from 'axios'
+import { useRuntimeConfig } from '#imports'
 
 const users = ref([])
 const tasks = ref([])
@@ -437,25 +438,27 @@ const selectedUserName = computed(() => {
 
 onMounted(async () => {
   try {
+    const config = useRuntimeConfig()
+    const apiUrl = config.public.apiUrl
     // Get current user info
     const token = localStorage.getItem('auth_token')
-    const meRes = await axios.get('http://localhost:8000/api/auth/me', {
+    const meRes = await axios.get(`${apiUrl}/auth/me`, {
       headers: { Authorization: `Bearer ${token}` }
     })
     currentUserId.value = meRes.data.id
     currentUserDepartmentId.value = meRes.data.department_id
     // Fetch departments and roles
     const [deptRes, rolesRes] = await Promise.all([
-      axios.get('http://localhost:8000/api/departments'),
-      axios.get('http://localhost:8000/api/roles')
+      axios.get(`${apiUrl}/departments`),
+      axios.get(`${apiUrl}/roles`)
     ])
     departments.value = deptRes.data
     roles.value = rolesRes.data
 
     const [usersRes, tasksRes, assignmentsRes] = await Promise.all([
-      axios.get('http://localhost:8000/api/users'),
-      axios.get('http://localhost:8000/api/tasks'),
-      axios.get('http://localhost:8000/api/task-assignments')
+      axios.get(`${apiUrl}/users`),
+      axios.get(`${apiUrl}/tasks`),
+      axios.get(`${apiUrl}/task-assignments`)
     ])
     users.value = usersRes.data
     tasks.value = tasksRes.data
@@ -496,8 +499,10 @@ async function assignTask() {
   if (!form.value.due_date) errors.value.due_date = 'Please select a due date.'
   if (Object.keys(errors.value).length > 0) return
   try {
+    const config = useRuntimeConfig()
+    const apiUrl = config.public.apiUrl
     const token = localStorage.getItem('auth_token')
-    const meRes = await axios.get('http://localhost:8000/api/auth/me', {
+    const meRes = await axios.get(`${apiUrl}/auth/me`, {
       headers: { Authorization: `Bearer ${token}` }
     })
     const payload = new FormData()
@@ -507,7 +512,7 @@ async function assignTask() {
     payload.append('due_date', form.value.due_date)
     payload.append('status', 'in_progress')
     if (file.value) payload.append('submitted_file', file.value)
-    const res = await axios.post('http://localhost:8000/api/task-assignments', payload, {
+    const res = await axios.post(`${apiUrl}/task-assignments`, payload, {
       headers: { 'Content-Type': 'multipart/form-data' }
     })
     assignments.value.push(res.data)
@@ -541,7 +546,9 @@ function confirmDeleteAssignment(assignment) {
 
 async function deleteAssignment(assignment) {
   try {
-    await axios.delete(`http://localhost:8000/api/task-assignments/${assignment.id}`)
+    const config = useRuntimeConfig()
+    const apiUrl = config.public.apiUrl
+    await axios.delete(`${apiUrl}/task-assignments/${assignment.id}`)
     const idx = assignments.value.findIndex(a => a.id === assignment.id)
     if (idx > -1) assignments.value.splice(idx, 1)
   } catch (err) {

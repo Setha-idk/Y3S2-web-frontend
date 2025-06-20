@@ -66,6 +66,7 @@
   
   <script>
   import axios from 'axios';
+  import { useRuntimeConfig } from '#app';
   export default {
     emits: ['task-created'], 
     data() {
@@ -75,8 +76,13 @@
           name: '',
           description: '',
           due_date: ''
-        }
+        },
+        apiUrl: null
       }
+    },
+    mounted() {
+      const config = useRuntimeConfig();
+      this.apiUrl = config.public.apiUrl;
     },
     methods: {
       openModal() {
@@ -97,7 +103,7 @@
         try {
           const token = localStorage.getItem('auth_token');
           // Always send description as a string
-          const response = await axios.post('http://localhost:8000/api/tasks', {
+          const response = await axios.post(`${this.apiUrl}/tasks`, {
             name: this.form.name,
             description: this.form.description || ''
           }, {

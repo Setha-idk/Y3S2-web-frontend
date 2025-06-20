@@ -150,6 +150,7 @@
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import { useAuth } from '@/composables/useAuth.js'
+import { useRuntimeConfig } from '#imports'
 
 const form = ref({
   name: '',
@@ -181,9 +182,11 @@ const roleList = ref([])
 // Fetch departments and roles from API
 const fetchDepartmentsAndRoles = async () => {
   try {
+    const config = useRuntimeConfig()
+    const apiUrl = config.public.apiUrl
     const [deptRes, roleRes] = await Promise.all([
-      axios.get('http://localhost:8000/api/departments'),
-      axios.get('http://localhost:8000/api/roles')
+      axios.get(`${apiUrl}/departments`),
+      axios.get(`${apiUrl}/roles`)
     ])
     departmentList.value = deptRes.data
     roleList.value = roleRes.data
@@ -225,13 +228,15 @@ const employees = ref([])
 
 const registerUser = async () => {
   try {
+    const config = useRuntimeConfig()
+    const apiUrl = config.public.apiUrl
     // Attach role_id and department_id to payload
     const payload = {
       ...form.value,
       role_id: getRoleIdByName(form.value.role),
       department_id: getDepartmentIdByName(form.value.department)
     }
-    const response = await axios.post('http://localhost:8000/api/users', payload)
+    const response = await axios.post(`${apiUrl}/users`, payload)
     successMessage.value = 'User registered successfully!'
     errorMessage.value = ''
     employees.value.push(response.data)
@@ -239,18 +244,18 @@ const registerUser = async () => {
     try {
       // Get current admin/creator user
       const token = localStorage.getItem('auth_token');
-      const meRes = await axios.get('http://localhost:8000/api/auth/me', {
+      const meRes = await axios.get(`${apiUrl}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const user = meRes.data
-      await axios.post('http://localhost:8000/api/history', {
+      await axios.post(`${apiUrl}/history`, {
         action: 'created',
         name: response.data.name,
         description: `Registered new user: ${response.data.name} (${response.data.email}), department: ${response.data.department}, role: ${response.data.role}, access level: ${response.data.access_level}`,
         user_name: user.name,
         email: user.email,
         employee_id: user.id
-      })
+      }, { headers: { Authorization: `Bearer ${token}` } })
     } catch (e) {
       // Optionally handle error
     }

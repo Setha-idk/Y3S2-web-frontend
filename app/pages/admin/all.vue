@@ -160,14 +160,16 @@
 </template>
 
 <script setup>
-
 import SearchInput from '../../components/SearchInput.vue'
 import DropdownFilter from '../../components/DropdownFilter.vue'
 import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
+import { useRuntimeConfig } from '#app'
+
+const config = useRuntimeConfig()
+const apiUrl = config.public.apiUrl
 
 const activeTab = ref('employees')
-
 const employees = ref([])
 const managers = ref([])
 const departments = ref([])
@@ -205,7 +207,7 @@ const updateEmployee = async () => {
       payload.password = password
     }
 
-    await axios.put(`http://localhost:8000/api/users/${id}`, payload)
+    await axios.put(`${apiUrl}/users/${id}`, payload)
 
     const index = employees.value.findIndex(emp => emp.id === id)
     if (index !== -1) {
@@ -225,7 +227,7 @@ const deleteEmployee = async (id) => {
   if (!confirm('Are you sure you want to delete this employee?')) return;
 
   try {
-    await axios.delete(`http://localhost:8000/api/users/${id}`);
+    await axios.delete(`${apiUrl}/users/${id}`);
     employees.value = employees.value.filter(emp => emp.id !== id);
   } catch (error) {
     console.error('Failed to delete employee:', error);
@@ -236,7 +238,7 @@ const deleteEmployee = async (id) => {
 // Fetch users
 const fetchUsers = async () => {
   try {
-    const response = await axios.get('http://localhost:8000/api/users')
+    const response = await axios.get(`${apiUrl}/users`)
     const users = response.data
 
     employees.value = users.filter(user => user.role !== 'Manager')
@@ -253,7 +255,7 @@ const fetchUsers = async () => {
 
 const fetchDepartments = async () => {
   try {
-    const response = await axios.get('http://localhost:8000/api/departments')
+    const response = await axios.get(`${apiUrl}/departments`)
     departments.value = response.data
   } catch (error) {
     console.error('Failed to fetch departments:', error)
@@ -263,7 +265,7 @@ const fetchDepartments = async () => {
 
 const fetchRoles = async () => {
   try {
-    const response = await axios.get('http://localhost:8000/api/roles')
+    const response = await axios.get(`${apiUrl}/roles`)
     roles.value = response.data
   } catch (error) {
     console.error('Failed to fetch roles:', error)

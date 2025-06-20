@@ -175,6 +175,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
+import { useRuntimeConfig } from '#imports'
 import LoadingSpinner from '../components/LoadingSpinner.vue'
 import FormInput from '../components/FormInput.vue'
 import BackButton from '../components/BackButton.vue'
@@ -208,7 +209,9 @@ const getProfilePictureUrl = (profile_picture) => {
 // Fetch departments from API
 const fetchDepartments = async () => {
   try {
-    const res = await axios.get('http://localhost:8000/api/departments')
+    const config = useRuntimeConfig()
+    const apiUrl = config.public.apiUrl
+    const res = await axios.get(`${apiUrl}/departments`)
     departments.value = res.data
   } catch (err) {
     console.error('Failed to fetch departments:', err)
@@ -218,7 +221,9 @@ const fetchDepartments = async () => {
 // Fetch roles from API
 const fetchRoles = async () => {
   try {
-    const res = await axios.get('http://localhost:8000/api/roles')
+    const config = useRuntimeConfig()
+    const apiUrl = config.public.apiUrl
+    const res = await axios.get(`${apiUrl}/roles`)
     roles.value = res.data
   } catch (err) {
     console.error('Failed to fetch roles:', err)
@@ -231,7 +236,9 @@ const fetchProfile = async () => {
   error.value = ''
   try {
     const token = localStorage.getItem('auth_token')
-    const res = await axios.get('http://localhost:8000/api/auth/me', {
+    const config = useRuntimeConfig()
+    const apiUrl = config.public.apiUrl
+    const res = await axios.get(`${apiUrl}/auth/me`, {
       headers: { Authorization: `Bearer ${token}` }
     })
     
@@ -302,6 +309,8 @@ const updateProfile = async () => {
   
   try {
     const token = localStorage.getItem('auth_token')
+    const config = useRuntimeConfig()
+    const apiUrl = config.public.apiUrl
     const formData = new FormData()
     
     // Append all form data
@@ -314,14 +323,9 @@ const updateProfile = async () => {
     
     // Send PUT request with FormData
     await axios.post(
-      `http://localhost:8000/api/users/${user.value.id}?_method=PUT`, 
-      formData, 
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
-        }
-      }
+      `${apiUrl}/users/${user.value.id}?_method=PUT`, 
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
     )
     
     successMessage.value = 'Profile updated successfully!'

@@ -141,6 +141,7 @@ import StepCreator from '@/components/StepCreator.vue'
 import StepList2 from '@/components/StepList2.vue'
 import SearchInput from '@/components/SearchInput.vue'
 import { useAuth } from '@/composables/useAuth.js'
+import { useRuntimeConfig } from '#app'
 
 export default {
   components: { TaskCreator, StepCreator, StepList2, SearchInput },
@@ -152,7 +153,8 @@ export default {
       search: '',
       user: null,
       userLoading: true,
-      userError: null
+      userError: null,
+      apiUrl: null
     }
   },
   computed: {
@@ -165,6 +167,8 @@ export default {
     }
   },
   async mounted() {
+    const config = useRuntimeConfig()
+    this.apiUrl = config.public.apiUrl
     await this.fetchUser()
     await this.fetchTasks()
   },
@@ -182,8 +186,8 @@ export default {
     async fetchTasks() {
       try {
         const [tasksRes, stepsRes] = await Promise.all([
-          axios.get('http://localhost:8000/api/tasks'),
-          axios.get('http://localhost:8000/api/steps')
+          axios.get(`${this.apiUrl}/tasks`),
+          axios.get(`${this.apiUrl}/steps`)
         ])
         const allTasks = tasksRes.data
         const allSteps = stepsRes.data
@@ -225,7 +229,7 @@ export default {
       try {
         const oldName = task.name;
         const oldDesc = task.description;
-        const response = await axios.put(`http://localhost:8000/api/tasks/${task.id}`, {
+        const response = await axios.put(`${this.apiUrl}/tasks/${task.id}`, {
           name: task.editName,
           description: task.editDescription
         })
@@ -251,7 +255,7 @@ export default {
       const task = this.tasks.find(t => t.id === id)
       if (!confirm('Are you sure you want to delete this task?')) return
       try {
-        await axios.delete(`http://localhost:8000/api/tasks/${id}`)
+        await axios.delete(`${this.apiUrl}/tasks/${id}`)
         this.tasks = this.tasks.filter(t => t.id !== id)
         // Record history
         if (this.user && task) {
@@ -287,7 +291,7 @@ export default {
       const oldData = { ...step }
       Object.assign(step, newData)
       try {
-        await axios.put(`http://localhost:8000/api/steps/${stepId}`, newData)
+        await axios.put(`${this.apiUrl}/steps/${stepId}`, newData)
         // Record history
         if (this.user) {
           await this.recordHistory({
@@ -310,7 +314,7 @@ export default {
       const step = task.steps.find(s => s.id === stepId)
       if (!confirm(`Are you sure you want to delete the step "${step.name}"?`)) return
       try {
-        await axios.delete(`http://localhost:8000/api/steps/${stepId}`)
+        await axios.delete(`${this.apiUrl}/steps/${stepId}`)
         task.steps = task.steps.filter(s => s.id !== stepId)
         // Record history
         if (this.user) {
@@ -334,7 +338,7 @@ export default {
         if (!payload.action_time) {
           payload.action_time = new Date().toISOString();
         }
-        await axios.post('http://localhost:8000/api/history', {
+        await axios.post(`${this.apiUrl}/history`, {
           action_time: payload.action_time,
           user_name: payload.userName,
           email: payload.email,

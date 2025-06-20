@@ -85,7 +85,8 @@
   </template>
   
   <script>
-      import axios from 'axios';
+  import axios from 'axios';
+  import { useRuntimeConfig } from '#app';
   export default {
     props: {
       task: {
@@ -100,8 +101,13 @@
           id: null,
           name: '',
           description: ''
-        }
+        },
+        apiUrl: null
       }
+    },
+    mounted() {
+      const config = useRuntimeConfig();
+      this.apiUrl = config.public.apiUrl;
     },
     methods: {
       // Edit Step
@@ -113,7 +119,7 @@
       async updateStep() {
         try {
           const oldStep = { ...this.task.steps.find(s => s.id === this.editingStep.id) };
-          const response = await axios.put(`http://localhost:8000/api/steps/${this.editingStep.id}`, {
+          const response = await axios.put(`${this.apiUrl}/steps/${this.editingStep.id}`, {
             name: this.editingStep.name,
             description: this.editingStep.description
           })
@@ -139,7 +145,7 @@
         if (confirm('Are you sure you want to delete this step?')) {
           try {
             const step = this.task.steps.find(s => s.id === stepId)
-            await axios.delete(`http://localhost:8000/api/steps/${stepId}`)
+            await axios.delete(`${this.apiUrl}/steps/${stepId}`)
             // Remove from local state
             const index = this.task.steps.findIndex(s => s.id === stepId)
             if (index > -1) {

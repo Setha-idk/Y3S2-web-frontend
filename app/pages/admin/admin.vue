@@ -35,9 +35,9 @@
             <span class="text-sm font-medium">{{ item.name }}</span>
           </NuxtLink>
         </li>
-
+        
         <!-- Admin/Manager Section -->
-        <div v-if="user && (user.access_level === 'admin' || user.access_level === 'manager')" class="mt-4 pt-4 border-t border-gray-700">
+        <div v-if="user && (user.access_level === 'admin')" class="mt-4 pt-4 border-t border-gray-700">
           <p class="px-4 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Management</p>
           <li>
             <NuxtLink to="/admin/all" class="flex items-center px-4 py-3 mx-2 rounded-lg transition-colors hover:bg-gray-700 text-gray-300 hover:text-white">
@@ -70,7 +70,27 @@
             </NuxtLink>
           </li>
         </div>
-
+        <div v-if="user && (user.access_level === 'manager')" class="mt-4 pt-4 border-t border-gray-700">
+          <p class="px-4 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Management</p>
+          <li>
+            <NuxtLink to="/admin/all" class="flex items-center px-4 py-3 mx-2 rounded-lg transition-colors hover:bg-gray-700 text-gray-300 hover:text-white">
+              <span class="mr-3 text-lg">👥</span>
+              <span class="text-sm font-medium">All Employees</span>
+            </NuxtLink>
+          </li>
+          <li>
+            <NuxtLink to="/admin/departments" class="flex items-center px-4 py-3 mx-2 rounded-lg transition-colors hover:bg-gray-700 text-gray-300 hover:text-white">
+              <span class="mr-3 text-lg">🏢</span>
+              <span class="text-sm font-medium">Departments</span>
+            </NuxtLink>
+          </li>
+          <li>
+            <NuxtLink to="/admin/register" class="flex items-center px-4 py-3 mx-2 rounded-lg transition-colors hover:bg-gray-700 text-gray-300 hover:text-white">
+              <span class="mr-3 text-lg">➕</span>
+              <span class="text-sm font-medium">Add Employee</span>
+            </NuxtLink>
+          </li>
+        </div>
         <!-- Auth Section -->
         <div class="mt-4 pt-4 border-t border-gray-700">
           <li v-if="user">
@@ -248,10 +268,12 @@
 import axios from 'axios'
 import StatsCards from '@/components/StatsCards.vue'
 import { useAuth } from '../../composables/useAuth.js'
+import { useRuntimeConfig } from '#app'
 
 export default {
   components: { StatsCards },
   data() {
+    const config = useRuntimeConfig();
     return {
       loading: true,
       error: null,
@@ -267,6 +289,7 @@ export default {
         { name: 'Update Profile', path: '/UpdateProfile', icon: '👤' },
         { name: 'Home', path: '/', icon: '🏠' },
       ],
+      apiUrl: config.public.apiUrl
     }
   },
   computed: {
@@ -317,37 +340,37 @@ export default {
   methods: {
     async fetchDepartments() {
       try {
-        const res = await axios.get('http://localhost:8000/api/departments')
+        const res = await axios.get(`${this.apiUrl}/departments`)
         this.departments = res.data
       } catch {}
     },
     async fetchRoles() {
       try {
-        const res = await axios.get('http://localhost:8000/api/roles')
+        const res = await axios.get(`${this.apiUrl}/roles`)
         this.roles = res.data
       } catch {}
     },
     async fetchTasks() {
       try {
-        const res = await axios.get('http://localhost:8000/api/tasks')
+        const res = await axios.get(`${this.apiUrl}/tasks`)
         this.tasks = res.data
       } catch {}
     },
     async fetchEmployees() {
       try {
-        const res = await axios.get('http://localhost:8000/api/users')
+        const res = await axios.get(`${this.apiUrl}/users`)
         this.employees = res.data
       } catch {}
     },
     async fetchHistory() {
       try {
-        const res = await axios.get('http://localhost:8000/api/history?_sort=created_at&_order=desc')
+        const res = await axios.get(`${this.apiUrl}/history?_sort=created_at&_order=desc`)
         this.history = Array.isArray(res.data) ? res.data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) : []
       } catch {}
     },
     getProfilePictureUrl(profile_picture) {
       if (!profile_picture) return ''
-      return `http://localhost:8000/storage/${profile_picture}`
+      return `${this.apiUrl}/storage/${profile_picture}`
     },
     formatDate(dateString) {
       const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }
@@ -355,7 +378,7 @@ export default {
     },
     async logout() {
       try {
-        await axios.post('http://localhost:8000/api/logout', {}, {
+        await axios.post(`${this.apiUrl}/logout`, {}, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         })
       } catch (e) {}

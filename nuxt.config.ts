@@ -35,5 +35,10 @@ export default defineNuxtConfig({
         { name: "description", content: "My Nuxt.js and laravel web project" }
       ]
     }
-  }
+  },
+  runtimeConfig: {
+    public: {
+      apiUrl: process.env.API_URL || "http://localhost:8000/api"
+    }
+  },
 })

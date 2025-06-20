@@ -36,6 +36,7 @@
 
 <script>
 import axios from 'axios'
+import { useRuntimeConfig } from '#imports'
 export default {
   data() {
     return {
@@ -46,7 +47,9 @@ export default {
   },
   async mounted() {
     try {
-      const res = await axios.get('http://localhost:8000/api/history')
+      const config = useRuntimeConfig()
+      const apiUrl = config.public.apiUrl
+      const res = await axios.get(`${apiUrl}/history`)
       this.edits = res.data
     } catch (err) {
       this.error = err.response?.data?.message || err.message

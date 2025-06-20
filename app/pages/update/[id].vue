@@ -114,6 +114,7 @@ import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import BackButton from '../../components/BackButton.vue'
 import { useAuth } from '../../composables/useAuth.js'
+import { useRuntimeConfig } from '#imports'
 
 const { user, fetchUser } = useAuth()
 
@@ -134,11 +135,13 @@ const roles = ref([])
 onMounted(async () => {
   await fetchUser()
   try {
+    const config = useRuntimeConfig()
+    const apiUrl = config.public.apiUrl
     const token = localStorage.getItem('auth_token')
     const [userRes, deptRes, roleRes] = await Promise.all([
-      axios.get(`http://localhost:8000/api/users/${userId}`, { headers: { Authorization: `Bearer ${token}` } }),
-      axios.get('http://localhost:8000/api/departments'),
-      axios.get('http://localhost:8000/api/roles'),
+      axios.get(`${apiUrl}/users/${userId}`, { headers: { Authorization: `Bearer ${token}` } }),
+      axios.get(`${apiUrl}/departments`),
+      axios.get(`${apiUrl}/roles`),
     ])
     const userData = userRes.data
     form.value = {
@@ -162,12 +165,14 @@ async function updateUser() {
   if (!form.value.role_id) errors.value.role_id = 'Role is required.'
   if (Object.keys(errors.value).length > 0) return
   try {
+    const config = useRuntimeConfig()
+    const apiUrl = config.public.apiUrl
     const token = localStorage.getItem('auth_token')
     // Get old user data
-    const oldUserRes = await axios.get(`http://localhost:8000/api/users/${userId}`, { headers: { Authorization: `Bearer ${token}` } })
+    const oldUserRes = await axios.get(`${apiUrl}/users/${userId}`, { headers: { Authorization: `Bearer ${token}` } })
     const oldUser = oldUserRes.data
 
-    await axios.put(`http://localhost:8000/api/users/${userId}`, form.value, { headers: { Authorization: `Bearer ${token}` } })
+    await axios.put(`${apiUrl}/users/${userId}`, form.value, { headers: { Authorization: `Bearer ${token}` } })
     // Record edit history
     if (user.value) {
       // Build change description
@@ -187,7 +192,7 @@ async function updateUser() {
       const description = changes.length > 0 
         ? `Updated employee (${oldUser.name}): ` + changes.join('; ') 
         : `No changes for employee (${oldUser.name})`
-      await axios.post('http://localhost:8000/api/history', {
+      await axios.post(`${apiUrl}/history`, {
         action_time: new Date().toISOString(),
         user_name: user.value.name,
         email: user.value.email,

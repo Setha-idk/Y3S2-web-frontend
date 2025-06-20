@@ -274,6 +274,7 @@ import axios from 'axios'
 import StatsCards from '@/components/StatsCards.vue'
 import TaskFileUpload from '@/components/TaskFileUpload.vue'
 import { useAuth } from '../composables/useAuth.js'
+import { useRuntimeConfig } from '#imports'
 
 export default {
   components: { StatsCards, TaskFileUpload },
@@ -346,14 +347,16 @@ export default {
     },
     async fetchData() {
       try {
-        // Fetch tasks, steps, and assignments in parallel
-        const [tasksRes, stepsRes, assignmentsRes] = await Promise.all([
-          axios.get('http://localhost:8000/api/tasks'),
-          axios.get('http://localhost:8000/api/steps'),
-          axios.get('http://localhost:8000/api/task-assignments')
-        ])
+        const config = useRuntimeConfig()
+        const apiUrl = config.public.apiUrl
+        // 1. Fetch tasks
+        const tasksRes = await axios.get(`${apiUrl}/tasks`)
         const allTasks = tasksRes.data
+        // 2. Fetch steps
+        const stepsRes = await axios.get(`${apiUrl}/steps`)
         this.allSteps = stepsRes.data
+        // 3. Fetch assignments
+        const assignmentsRes = await axios.get(`${apiUrl}/task-assignments`)
         this.assignments = assignmentsRes.data
         // Filter assignments for current user
         const userAssignments = this.assignments.filter(a => this.user && a.employee_id === this.user.id)
@@ -387,7 +390,9 @@ export default {
       this.successTimeout = setTimeout(() => this.showSuccess = false, 3000)
     },
     fileDownloadUrl(taskId) {
-      return `http://localhost:8000/api/tasks/${taskId}/file`
+      const config = useRuntimeConfig()
+      const apiUrl = config.public.apiUrl
+      return `${apiUrl}/tasks/${taskId}/file`
     },
     statusClass(status) {
       const classes = {
@@ -422,7 +427,9 @@ export default {
     },
     async logout() {
       try {
-        await axios.post('http://localhost:8000/api/logout', {}, {
+        const config = useRuntimeConfig()
+        const apiUrl = config.public.apiUrl
+        await axios.post(`${apiUrl}/logout`, {}, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         })
       } catch (e) {
@@ -439,20 +446,20 @@ export default {
           this.showSuccessPopup('Assignment not found.')
           return
         }
-        // If there's an uploaded file, submit it to the assignment API
+        const config = useRuntimeConfig()
+        const apiUrl = config.public.apiUrl
         if (task.uploadedFile) {
           const formData = new FormData()
           formData.append('submitted_file_path', task.uploadedFile)
           formData.append('status', 'completed')
           formData.append('submitted_date', new Date().toISOString().slice(0, 10))
           await axios.post(
-            `http://localhost:8000/api/task-assignments/${assignment.id}?_method=PUT`,
+            `${apiUrl}/task-assignments/${assignment.id}?_method=PUT`,
             formData,
             { headers: { 'Content-Type': 'multipart/form-data' } }
           )
         } else {
-          // Otherwise, just update the status to completed
-          await axios.patch(`http://localhost:8000/api/task-assignments/${assignment.id}`, {
+          await axios.patch(`${apiUrl}/task-assignments/${assignment.id}`, {
             status: 'completed',
             submitted_date: new Date().toISOString().slice(0, 10)
           })
@@ -474,9 +481,9 @@ export default {
           this.showSuccessPopup('Assignment not found.')
           return
         }
-        // Delete the assignment (not the task itself, to preserve multi-user assignments)
-        await axios.delete(`http://localhost:8000/api/task-assignments/${assignment.id}`)
-        // Remove the task from the local list
+        const config = useRuntimeConfig()
+        const apiUrl = config.public.apiUrl
+        await axios.delete(`${apiUrl}/task-assignments/${assignment.id}`)
         this.tasks = this.tasks.filter(t => t.id !== task.id)
         this.showSuccessPopup('Task deleted successfully!')
         await this.fetchData()
@@ -486,7 +493,9 @@ export default {
     },
     async fetchDepartments() {
       try {
-        const res = await axios.get('http://localhost:8000/api/departments')
+        const config = useRuntimeConfig()
+        const apiUrl = config.public.apiUrl
+        const res = await axios.get(`${apiUrl}/departments`)
         this.departments = res.data
       } catch (e) {
         this.departments = []
@@ -494,7 +503,9 @@ export default {
     },
     async fetchRoles() {
       try {
-        const res = await axios.get('http://localhost:8000/api/roles')
+        const config = useRuntimeConfig()
+        const apiUrl = config.public.apiUrl
+        const res = await axios.get(`${apiUrl}/roles`)
         this.roles = res.data
       } catch (e) {
         this.roles = []
@@ -516,8 +527,8 @@ export default {
       if (task._uploadedFileUrl) {
         URL.revokeObjectURL(task._uploadedFileUrl)
       }
-      this.$delete(task, 'uploadedFile')
-      this.$delete(task, '_uploadedFileUrl')
+      delete task.uploadedFile
+      delete task._uploadedFileUrl
     },
     uploadedFileUrl(task) {
       if (task.uploadedFile) {

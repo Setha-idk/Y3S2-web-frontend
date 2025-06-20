@@ -201,8 +201,11 @@ import AddDepartment from '../../components/AddDepartment.vue'
 import AddRole from '../../components/AddRole.vue'
 import { useAuth } from '../../composables/useAuth.js'
 import BackButton from '../../components/BackButton.vue'
+import { useRuntimeConfig } from '#imports'
 
 const { user, fetchUser } = useAuth()
+const config = useRuntimeConfig()
+const apiUrl = config.public.apiUrl
 
 const departments = ref([])
 const search = ref('')
@@ -234,8 +237,8 @@ const fetchDepartmentsAndRoles = async () => {
   try {
     const token = localStorage.getItem('auth_token')
     const [deptRes, roleRes] = await Promise.all([
-      axios.get('http://localhost:8000/api/departments', { headers: { Authorization: `Bearer ${token}` } }),
-      axios.get('http://localhost:8000/api/roles', { headers: { Authorization: `Bearer ${token}` } })
+      axios.get(`${apiUrl}/departments`, { headers: { Authorization: `Bearer ${token}` } }),
+      axios.get(`${apiUrl}/roles`, { headers: { Authorization: `Bearer ${token}` } })
     ])
     const deptList = deptRes.data
     const roles = roleRes.data
@@ -267,14 +270,14 @@ function editDepartment(dept) {
 }
 async function updateDepartment() {
   const token = localStorage.getItem('auth_token')
-  await axios.put(`http://localhost:8000/api/departments/${editingDepartment.value.id}`, editingDepartment.value, { headers: { Authorization: `Bearer ${token}` } })
+  await axios.put(`${apiUrl}/departments/${editingDepartment.value.id}`, editingDepartment.value, { headers: { Authorization: `Bearer ${token}` } })
   editingDepartment.value = null
   fetchDepartmentsAndRoles()
 }
 async function deleteDepartment(id) {
   if (!confirm('Delete this department?')) return
   const token = localStorage.getItem('auth_token')
-  await axios.delete(`http://localhost:8000/api/departments/${id}`, { headers: { Authorization: `Bearer ${token}` } })
+  await axios.delete(`${apiUrl}/departments/${id}`, { headers: { Authorization: `Bearer ${token}` } })
   fetchDepartmentsAndRoles()
 }
 // CRUD for Role
@@ -283,14 +286,14 @@ function editRole(role, department_id) {
 }
 async function updateRole() {
   const token = localStorage.getItem('auth_token')
-  await axios.put(`http://localhost:8000/api/roles/${editingRole.value.id}`, editingRole.value, { headers: { Authorization: `Bearer ${token}` } })
+  await axios.put(`${apiUrl}/roles/${editingRole.value.id}`, editingRole.value, { headers: { Authorization: `Bearer ${token}` } })
   editingRole.value = null
   fetchDepartmentsAndRoles()
 }
 async function deleteRole(id) {
   if (!confirm('Delete this role?')) return
   const token = localStorage.getItem('auth_token')
-  await axios.delete(`http://localhost:8000/api/roles/${id}`, { headers: { Authorization: `Bearer ${token}` } })
+  await axios.delete(`${apiUrl}/roles/${id}`, { headers: { Authorization: `Bearer ${token}` } })
   fetchDepartmentsAndRoles()
 }
 </script>

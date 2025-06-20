@@ -64,6 +64,7 @@
   
   <script>
     import axios from 'axios';
+    import { useRuntimeConfig } from '#app';
 
   export default {
     props: {
@@ -79,8 +80,13 @@
         newStep: {
           name: '',
           description: ''
-        }
+        },
+        apiUrl: null
       }
+    },
+    mounted() {
+      const config = useRuntimeConfig();
+      this.apiUrl = config.public.apiUrl;
     },
     methods: {
       openStepModal() {
@@ -99,7 +105,7 @@
       async createStep() {
         this.isSubmitting = true
         try {
-          const response = await axios.post(`http://localhost:8000/api/tasks/${this.taskId}/steps`, {
+          const response = await axios.post(`${this.apiUrl}/tasks/${this.taskId}/steps`, {
             name: this.newStep.name,
             task_id: this.taskId,
             description: this.newStep.description

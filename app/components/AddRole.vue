@@ -21,19 +21,22 @@
 import { ref } from 'vue'
 import Modal from './Modal.vue'
 import axios from 'axios'
+import { useRuntimeConfig } from '#app'
 const props = defineProps({ departmentId: [String, Number] })
 const emit = defineEmits(['created'])
 const show = ref(false)
 const form = ref({ name: '', description: '' })
 const loading = ref(false)
 const error = ref('')
+const config = useRuntimeConfig()
+const apiUrl = config.public.apiUrl
 async function submit() {
   if (!form.value.name) { error.value = 'Name required'; return }
   loading.value = true
   error.value = ''
   try {
     const token = localStorage.getItem('auth_token')
-    await axios.post('http://localhost:8000/api/roles', { ...form.value, department_id: props.departmentId }, { headers: { Authorization: `Bearer ${token}` } })
+    await axios.post(`${apiUrl}/roles`, { ...form.value, department_id: props.departmentId }, { headers: { Authorization: `Bearer ${token}` } })
     emit('created')
     form.value = { name: '', description: '' }
     show.value = false

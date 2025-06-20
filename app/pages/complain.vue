@@ -160,6 +160,7 @@
 import axios from 'axios'
 import FileComplaintModal from '../components/FileComplaintModal.vue'
 import BackButton from '../components/BackButton.vue'
+import { useRuntimeConfig } from '#imports'
 export default {
   components: { FileComplaintModal, BackButton },
   data() {
@@ -191,7 +192,9 @@ export default {
     async fetchCurrentUser() {
       try {
         const token = localStorage.getItem('auth_token');
-        const res = await axios.get('http://localhost:8000/api/auth/me', {
+        const config = useRuntimeConfig()
+        const apiUrl = config.public.apiUrl
+        const res = await axios.get(`${apiUrl}/auth/me`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         this.currentUser = res.data
@@ -200,19 +203,25 @@ export default {
       }
     },
     async fetchUsers() {
-      const res = await axios.get('http://localhost:8000/api/users')
+      const config = useRuntimeConfig()
+      const apiUrl = config.public.apiUrl
+      const res = await axios.get(`${apiUrl}/users`)
       this.users = res.data.filter(u => !this.currentUser || u.id !== this.currentUser.id)
     },
     async fetchComplaints() {
       if (!this.currentUser) return
-      const res = await axios.get('http://localhost:8000/api/complaints')
+      const config = useRuntimeConfig()
+      const apiUrl = config.public.apiUrl
+      const res = await axios.get(`${apiUrl}/complaints`)
       this.complaintsTo = res.data.filter(c => c.user_id === this.currentUser.id)
       this.complaintsFrom = res.data.filter(c => c.target_person_id === this.currentUser.id)
     },
     async submitComplaint() {
       if (!this.form.target_person_id || !this.form.type || !this.form.subject) return
       try {
-        await axios.post('http://localhost:8000/api/complaints', {
+        const config = useRuntimeConfig()
+        const apiUrl = config.public.apiUrl
+        await axios.post(`${apiUrl}/complaints`, {
           user_id: this.currentUser.id,
           target_person_id: this.form.target_person_id,
           type: this.form.type,

@@ -1,5 +1,6 @@
 <script setup>
 import axios from 'axios'
+import { useRuntimeConfig } from '#app'
 const emit = defineEmits(['close', 'submitted'])
 const props = defineProps({
   show: Boolean,
@@ -7,6 +8,9 @@ const props = defineProps({
   form: Object,
   currentUser: Object
 })
+
+const config = useRuntimeConfig()
+const apiUrl = config.public.apiUrl
 
 const localForm = reactive({
   target_person_id: '',
@@ -25,7 +29,7 @@ watch(() => props.show, (val) => {
 const submit = async () => {
   if (!localForm.target_person_id || !localForm.type || !localForm.subject) return
   try {
-    await axios.post('http://localhost:8000/api/complaints', {
+    await axios.post(`${apiUrl}/complaints`, {
       user_id: props.currentUser.id,
       target_person_id: localForm.target_person_id,
       type: localForm.type,

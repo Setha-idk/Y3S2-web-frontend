@@ -46,6 +46,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import { useRuntimeConfig } from '#imports'
 
 const form = ref({
   email: '',
@@ -57,10 +58,21 @@ const router = useRouter()
 
 const loginUser = async () => {
     try {
-      const response = await axios.post('http://localhost:8000/api/login', {
-        email: form.value.email,
-        password: form.value.password,
-      })
+      const config = useRuntimeConfig()
+      const apiUrl = config.public.apiUrl
+      const response = await axios.post(
+        `${apiUrl}/login`,
+        {
+          email: form.value.email,
+          password: form.value.password
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        }
+      )
       successMessage.value = response.data.message
       errorMessage.value = ''
       // Store token in localStorage for use in authenticated requests
